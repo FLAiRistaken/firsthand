@@ -20,8 +20,8 @@ export const Colors = {
 }
 
 export const Fonts = {
-  serif: 'Fraunces',
-  sans: 'DM Sans',
+  serif: 'Fraunces_400Regular',
+  sans: 'DMSans_400Regular',
 }
 
 export const FontSizes = {
@@ -64,4 +64,4 @@ export const DEFAULT_CATEGORIES = [
   'other',
 ] as const
 
-export type Category = typeof DEFAULT_CATEGORIES[number] | string
+export type Category = (typeof DEFAULT_CATEGORIES)[number] | (string & {})
