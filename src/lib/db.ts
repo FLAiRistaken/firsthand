@@ -33,12 +33,14 @@ export const insertLog = async (log: Omit<LogEntry, 'id' | 'created_at'>): Promi
 
 export const updateLog = async (
   id: string,
+  userId: string,
   updates: Partial<Pick<LogEntry, 'note' | 'category' | 'context' | 'duration_mins'>>
 ): Promise<LogEntry> => {
   const { data, error } = await supabase
     .from('logs')
     .update(updates)
     .eq('id', id)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -55,18 +57,14 @@ export const getProfile = async (userId: string): Promise<UserProfile | null> =>
     .from('profiles')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // PGRST116 means zero rows returned (not found)
-      return null;
-    }
     console.error('Error fetching profile:', error);
     throw error;
   }
 
-  return data as UserProfile;
+  return data as UserProfile | null;
 };
 
 export const upsertProfile = async (
