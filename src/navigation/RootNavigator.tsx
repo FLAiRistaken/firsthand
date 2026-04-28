@@ -13,29 +13,43 @@ export function RootNavigator() {
   const [isLoading, setIsLoading] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
 
-  useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
-
   const checkOnboardingStatus = async () => {
     try {
       // In a real app we'd get the user ID from auth session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
-      if (userId) {
-        const profile = await getProfile(userId);
-        if (profile?.onboarded) {
-          setIsOnboarded(true);
-        }
+      if (!userId) {
+        setIsOnboarded(false);
+        return;
       }
+
+      const profile = await getProfile(userId);
+      setIsOnboarded(!!profile?.onboarded);
     } catch (error) {
       console.error('Error checking onboarding status:', error);
+      setIsOnboarded(false);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    checkOnboardingStatus();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      setIsLoading(true);
+      checkOnboardingStatus();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
