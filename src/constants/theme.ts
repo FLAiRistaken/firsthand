@@ -21,7 +21,9 @@ export const Colors = {
 
 export const Fonts = {
   serif: 'Fraunces_400Regular',
+  serifSemiBold: 'Fraunces_600SemiBold',
   sans: 'DMSans_400Regular',
+  sansMedium: 'DMSans_500Medium',
 }
 
 export const FontSizes = {
