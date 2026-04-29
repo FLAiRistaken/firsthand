@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Session } from '@supabase/supabase-js';
 import { AppNavigator } from './AppNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import AuthScreen from '../screens/AuthScreen';
 import { getProfile } from '../lib/db';
 import { Colors } from '../constants/theme';
 import { supabase } from '../lib/supabase';
@@ -11,22 +13,27 @@ const Stack = createNativeStackNavigator();
 
 export function RootNavigator() {
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
   const [isOnboarded, setIsOnboarded] = useState(false);
 
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = async (providedSession?: Session | null) => {
     try {
-      // In a real app we'd get the user ID from auth session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
+      let activeSession = providedSession;
+      if (activeSession === undefined) {
+        const {
+          data: { session: fetchedSession },
+        } = await supabase.auth.getSession();
+        activeSession = fetchedSession;
+      }
 
-      if (!userId) {
+      setSession(activeSession);
+
+      if (!activeSession?.user?.id) {
         setIsOnboarded(false);
         return;
       }
 
-      const profile = await getProfile(userId);
+      const profile = await getProfile(activeSession.user.id);
       setIsOnboarded(!!profile?.onboarded);
     } catch (error) {
       console.error('Error checking onboarding status:', error);
@@ -41,15 +48,16 @@ export function RootNavigator() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((_event, listenerSession) => {
       setIsLoading(true);
-      checkOnboardingStatus();
+      checkOnboardingStatus(listenerSession);
     });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -60,7 +68,9 @@ export function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isOnboarded ? (
+      {!session ? (
+        <Stack.Screen name="Auth" component={AuthScreen} />
+      ) : isOnboarded ? (
         <Stack.Screen name="App" component={AppNavigator} />
       ) : (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
