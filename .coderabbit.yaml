@@ -1,0 +1,35 @@
+language: "en-GB"
+
+reviews:
+  profile: "assertive"
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!prototype/**"
+    - "!docs/**"
+    - "!**/*.md"
+  path_instructions:
+    - path: "src/screens/**"
+      instructions: |
+        Check that all colours reference Colors.* from theme.ts — no hardcoded hex values.
+        Check that all fonts reference Fonts.* and FontSizes.* from theme.ts.
+        Check that safe area insets are handled.
+        Check that all styles are in StyleSheet.create() except dynamic values.
+    - path: "src/lib/db.ts"
+      instructions: |
+        There must be no deleteLog or any log deletion function — this is a product rule.
+        updateLog must never allow changing the type field (win/sin).
+        All queries must filter on both id and user_id, never id alone.
+    - path: "src/lib/anthropic.ts"
+      instructions: |
+        Every fetch call must have an AbortController timeout.
+        The API key must be checked at call time, not module init.
+    - path: "src/hooks/**"
+      instructions: |
+        Never reimplement logic that exists in useAuth, useLogs, useStats, or useProfile.
+        Supabase queries must use .maybeSingle() not .single().
+        All user values passed into Anthropic prompts must go through sanitizePromptValue().
+
+chat:
+  auto_reply: true
