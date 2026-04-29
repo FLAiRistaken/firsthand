@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 17,
+    fontSize: FontSizes.lg,
     color: Colors.textPrimary,
   },
   progressTrack: {
@@ -282,12 +282,12 @@ const styles = StyleSheet.create({
   },
   progressSubtitle: {
     fontFamily: Fonts.sans,
-    fontSize: 11,
+    fontSize: FontSizes.sm,
     color: Colors.textHint,
   },
   progressCount: {
     fontFamily: Fonts.sans,
-    fontSize: 11,
+    fontSize: FontSizes.sm,
     color: Colors.textHint,
   },
   progressCountDone: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   assistantMessageText: {
-    fontFamily: 'DMSans_300Light', // explicit map for 300 Light if needed, fallback to sans if unavailable
+    fontFamily: Fonts.sans,
     color: Colors.textPrimary,
   },
   typingIndicatorContainer: {
