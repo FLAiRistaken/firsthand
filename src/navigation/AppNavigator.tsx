@@ -5,7 +5,13 @@ import HistoryScreen from '../screens/HistoryScreen';
 import CoachScreen from '../screens/CoachScreen';
 import { TabBar } from '../components/TabBar';
 
-const Tab = createBottomTabNavigator();
+export type AppTabParamList = {
+  Home: undefined;
+  History: undefined;
+  Coach: undefined;
+};
+
+const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export function AppNavigator() {
   return (

@@ -1,10 +1,17 @@
 export const Colors = {
   primary: '#2A5C45',
   primaryLight: '#E8F2ED',
+  primaryBorder: '#C8E2D5',
   amber: '#9C6B1A',
   amberLight: '#FDF3E3',
+  amberDark: '#8B6914',
   sinBg: '#FAF5EE',
   sinBorder: '#E8DDD0',
+  sinText: '#5A4A38',
+  sinTextLight: '#B8A898',
+  sinIconMuted: '#C4A882',
+  sinIconBg: '#DDD5C8',
+  sinCategoryText: '#7A6654',
   appBg: '#F7F6F3',
   cardBg: '#FFFFFF',
   border: '#F0EEE9',
@@ -18,6 +25,7 @@ export const Colors = {
   streakToday: '#CCCCCC',
   success: '#34C759',
   black: '#000000',
+  tabInactive: '#C8C4BE',
 }
 
 export const Fonts = {

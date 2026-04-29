@@ -10,7 +10,13 @@ import { Colors } from '../constants/theme';
 import { supabase } from '../lib/supabase';
 import { DEV_BYPASS_AUTH, DEV_USER } from '../lib/devConfig';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Auth: undefined;
+  App: undefined;
+  Onboarding: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const [isLoading, setIsLoading] = useState(true);
