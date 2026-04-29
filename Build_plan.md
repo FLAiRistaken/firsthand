@@ -51,8 +51,8 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔄 Phase 2 — Onboarding (in flight)
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 2.1 | Onboarding screen | 🔄 In Progress | Jules prompt 08 — AI-powered, 6 questions, Anthropic API |
-| 2.2 | Profile creation on complete | 🔄 In Progress | Bundled with 2.1 — writes profile via `updateProfile()` on `ONBOARDING_COMPLETE_TOKEN` |
+| 2.1 | Onboarding screen | ✅ Done | AI-powered, 6 questions, Anthropic API |
+| 2.2 | Profile creation on complete | 🔲 Pending | Write profile to Supabase on ONBOARDING_COMPLETE |
 
 ---
 
@@ -179,8 +179,8 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
 | 07b | DEV_BYPASS_AUTH | ✅ Merged via Antigravity — `__DEV__ && true` pattern |
 | 07c | Google Sign In stub | ✅ Merged via Antigravity — Expo Go compatibility |
-| 08 | Onboarding screen | 🔄 In Progress |
-| 09 | Home screen + LogModal | 🔄 In Progress |
+| 08 | Onboarding screen | ✅ Merged |
+| 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
 | 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
