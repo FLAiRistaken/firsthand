@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppNavigator } from './AppNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import AuthScreen from '../screens/AuthScreen';
 import { getProfile } from '../lib/db';
 import { Colors } from '../constants/theme';
 import { supabase } from '../lib/supabase';
@@ -11,22 +12,23 @@ const Stack = createNativeStackNavigator();
 
 export function RootNavigator() {
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
   const [isOnboarded, setIsOnboarded] = useState(false);
 
   const checkOnboardingStatus = async () => {
     try {
-      // In a real app we'd get the user ID from auth session
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
 
-      if (!userId) {
+      setSession(session);
+
+      if (!session?.user?.id) {
         setIsOnboarded(false);
         return;
       }
 
-      const profile = await getProfile(userId);
+      const profile = await getProfile(session.user.id);
       setIsOnboarded(!!profile?.onboarded);
     } catch (error) {
       console.error('Error checking onboarding status:', error);
@@ -41,8 +43,9 @@ export function RootNavigator() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoading(true);
+      setSession(session);
       checkOnboardingStatus();
     });
 
@@ -50,6 +53,7 @@ export function RootNavigator() {
       subscription.unsubscribe();
     };
   }, []);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -60,7 +64,9 @@ export function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isOnboarded ? (
+      {!session ? (
+        <Stack.Screen name="Auth" component={AuthScreen} />
+      ) : isOnboarded ? (
         <Stack.Screen name="App" component={AppNavigator} />
       ) : (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
