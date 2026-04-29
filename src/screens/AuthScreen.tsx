@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GoogleSignin } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
 import Svg, { Path } from 'react-native-svg';
 
@@ -126,9 +126,9 @@ export default function AuthScreen() {
           )}
 
           <TouchableOpacity
-            style={styles.googleButton}
+            style={[styles.googleButton, (__DEV__ && Platform.OS === 'ios') && styles.googleButtonDisabled]}
             onPress={handleGoogleSignIn}
-            disabled={googleLoading}
+            disabled={googleLoading || (__DEV__ && Platform.OS === 'ios')}
             activeOpacity={0.7}
           >
             {googleLoading ? (
@@ -138,7 +138,9 @@ export default function AuthScreen() {
                 <View style={styles.googleIconContainer}>
                   <GoogleIcon />
                 </View>
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
+                <Text style={[styles.googleButtonText, (__DEV__ && Platform.OS === 'ios') && styles.googleButtonTextDisabled]}>
+                  {__DEV__ && Platform.OS === 'ios' ? 'Available in full build' : 'Continue with Google'}
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -221,6 +223,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
+  },
+  googleButtonDisabled: {
+    backgroundColor: Colors.appBg,
+    borderColor: Colors.border,
+    opacity: 0.6,
+  },
+  googleButtonTextDisabled: {
+    color: Colors.textMuted,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

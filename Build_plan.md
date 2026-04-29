@@ -108,6 +108,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR befo
 | File | Issue | Fix |
 |---|---|---|
 | `src/screens/AuthScreen.tsx` | Apple Sign In gated on `Platform.OS === 'ios'` only | Change to `Platform.OS === 'ios' \|\| Platform.OS === 'macos'` |
+| `src/screens/AuthScreen.tsx` | Expo Go crash on Google Sign-In import | Google Sign In stubbed for Expo Go compatibility. Restore @react-native-google-signin/google-signin import when development build is configured. |
 
 ---
 
