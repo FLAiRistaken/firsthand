@@ -18,6 +18,7 @@ export const Colors = {
   streakToday: '#CCCCCC',
   success: '#34C759',
   black: '#000000',
+  tabInactive: '#C8C4BE',
 }
 
 export const Fonts = {

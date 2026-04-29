@@ -39,7 +39,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           }
         };
 
-        const color = isFocused ? Colors.primary : '#C8C4BE';
+        const color = isFocused ? Colors.primary : Colors.tabInactive;
 
         let iconPath = '';
         if (route.name === 'Home') {

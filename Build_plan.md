@@ -173,7 +173,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 01 | Theme constants + font loading | ✅ Merged — Copilot fixed font key strings, `Category` type with `string & {}` |
 | 02 | Supabase client + types + DB schema + helpers | ✅ Merged — Copilot fixed `.maybeSingle()`, `updateLog` userId param, removed `Database = any` |
 | 03 | Navigation shell + tab bar + screen placeholders | ✅ Merged — Copilot fixed unused imports + `onAuthStateChange` subscription |
-| 04 | Auth screen (Apple + Google) | ✅ Merged — Copilot fixed platform gate (still needs macOS), session type, loading scope |
+| 04 | Auth screen (Apple + Google) | ✅ Merged — Copilot fixed platform gate (iOS + macOS), session type, loading scope; Google env-var error handled gracefully |
 | 05 | Anthropic client + prompts | ✅ Merged — Copilot added `AbortController`, `sanitizePromptValue`, typed interfaces, reverted Haiku→Sonnet |
 | 06 | Shared UI components | ✅ Merged — Copilot fixed safe area insets, `PillButton` variant prop, added `Colors.black` |
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
