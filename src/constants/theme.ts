@@ -17,11 +17,15 @@ export const Colors = {
   streakEmpty: '#EBEBEB',
   streakToday: '#CCCCCC',
   success: '#34C759',
+  black: '#000000',
+  tabInactive: '#C8C4BE',
 }
 
 export const Fonts = {
   serif: 'Fraunces_400Regular',
+  serifSemiBold: 'Fraunces_600SemiBold',
   sans: 'DMSans_400Regular',
+  sansMedium: 'DMSans_500Medium',
 }
 
 export const FontSizes = {
