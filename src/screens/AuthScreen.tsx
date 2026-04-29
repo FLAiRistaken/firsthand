@@ -34,7 +34,7 @@ export default function AuthScreen() {
   const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === 'ios' || Platform.OS === 'macos') {
       AppleAuthentication.isAvailableAsync()
         .then(setAppleAvailable)
         .catch((err) => console.error('Apple authentication availability check failed:', err));

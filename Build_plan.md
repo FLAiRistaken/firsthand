@@ -48,7 +48,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR befo
 ### 🔲 Phase 2 — Onboarding
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 2.1 | Onboarding screen | 🔲 Next | AI-powered, 6 questions, Anthropic API |
+| 2.1 | Onboarding screen | ✅ Done | AI-powered, 6 questions, Anthropic API |
 | 2.2 | Profile creation on complete | 🔲 Pending | Write profile to Supabase on ONBOARDING_COMPLETE |
 
 ---
@@ -160,7 +160,8 @@ Do not build any of the following until explicitly added to the build plan:
 | 05 | Anthropic client + prompts | ✅ Merged — Copilot added AbortController, sanitizePromptValue, typed interfaces |
 | 06 | Shared UI components | ✅ Merged — Copilot fixed safe area insets, PillButton variant prop |
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, isNetworkError, AppState listener |
-| 08 | Onboarding screen | 🔲 Next |
+| 08 | Onboarding screen | ✅ Merged |
+| 09 | Next | 🔲 Next |
 
 ---
 
