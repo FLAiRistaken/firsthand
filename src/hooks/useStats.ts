@@ -76,7 +76,6 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
       while (winsByDay.has(checkDate.getTime())) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 1);
-        checkDate.setHours(0, 0, 0, 0);
       }
     }
 
@@ -122,7 +121,6 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(mondayDate);
       dayDate.setDate(dayDate.getDate() + i);
-      dayDate.setHours(0, 0, 0, 0);
       const dayMs = dayDate.getTime();
       // Don't mark future days
       if (dayMs <= startOfToday) {

@@ -17,6 +17,17 @@ const isNetworkError = (err: unknown): boolean => {
   return false;
 };
 
+// Monotonic counter used as part of the temp-ID fallback so that two logs
+// created in the same millisecond still get distinct IDs.
+let _tempIdCounter = 0;
+const generateTempId = (): string => {
+  if (globalThis.crypto?.randomUUID) {
+    return `temp-${globalThis.crypto.randomUUID()}`;
+  }
+  _tempIdCounter += 1;
+  return `temp-${Date.now()}-${_tempIdCounter}`;
+};
+
 export interface UseLogsReturn {
   logs: LogEntry[];
   isLoading: boolean;
@@ -117,7 +128,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     if (!userId) throw new Error('User not authenticated');
 
     // Create a temporary ID and timestamp for optimistic update
-    const tempId = `temp-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`;
+    const tempId = generateTempId();
     const now = new Date().toISOString();
 
     const optimisticLog: LogEntry = {
