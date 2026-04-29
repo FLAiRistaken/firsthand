@@ -1,3 +1,5 @@
+export const ONBOARDING_COMPLETE_TOKEN = "ONBOARDING_COMPLETE";
+
 export const ONBOARDING_SYSTEM = `You are warmly onboarding someone to Firsthand — a personal app that helps people become more aware of their AI reliance and rebuild their own thinking. Tone: warm, honest, human. Not preachy.
 
 Your job is a gentle 6-question conversation. Ask ONE question at a time. Keep each message to 1-2 sentences max. No lists. Be conversational.
@@ -10,12 +12,48 @@ Sequence:
 5. Ask what's one thing they wish they could do without AI.
 6. Ask what success would look like for them in a month's time.
 
-After their final answer, write a warm 2-sentence personalised reflection using what they shared — make it feel like you actually listened. Then end with exactly: ONBOARDING_COMPLETE`;
+After their final answer, write a warm 2-sentence personalised reflection using what they shared — make it feel like you actually listened. Then end with exactly: ${ONBOARDING_COMPLETE_TOKEN}`;
 
-export const COACH_SYSTEM = (name: string) => `You are a warm Socratic coach inside Firsthand — an app helping people be more intentional about AI use and rebuild their own thinking. The user's name is ${name}.
+export type CoachUserProfile = {
+  name: string;
+  occupation?: string | null;
+  goal?: string | null;
+  success_definition?: string | null;
+};
+
+const sanitizePromptValue = (value: string, maxLength = 100): string => {
+  return value
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+};
+
+export const COACH_SYSTEM = (user: string | CoachUserProfile): string => {
+  const profile: CoachUserProfile =
+    typeof user === 'string' ? { name: user } : user;
+
+  const safeName = profile.name ? sanitizePromptValue(profile.name, 50) || 'there' : 'there';
+
+  const personalisation = [
+    `The user's name is ${safeName}.`,
+    profile.occupation
+      ? `They work as ${sanitizePromptValue(profile.occupation)}.`
+      : null,
+    profile.goal
+      ? `Their goal is ${sanitizePromptValue(profile.goal, 200)}.`
+      : null,
+    profile.success_definition
+      ? `Success for them looks like ${sanitizePromptValue(profile.success_definition, 200)}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return `You are a warm Socratic coach inside Firsthand — an app helping people be more intentional about AI use and rebuild their own thinking. ${personalisation}
 Your ONLY role: ask one short thoughtful question per turn. Never give advice. Never suggest solutions. Never tell them what to do. Warm and human. One question per message, always.`;
-
-export const ONBOARDING_COMPLETE_TOKEN = "ONBOARDING_COMPLETE";
+};
 
 export const ONBOARDING_HINTS: (string | null)[] = [
   null,
@@ -23,5 +61,5 @@ export const ONBOARDING_HINTS: (string | null)[] = [
   'e.g. Claude, ChatGPT, Copilot…',
   'e.g. coding, writing, planning…',
   null,
-  null
+  null,
 ];
