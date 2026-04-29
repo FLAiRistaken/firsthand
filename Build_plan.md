@@ -59,12 +59,12 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔄 Phase 3 — Home Screen (in flight)
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 3.1 | Home screen layout | 🔄 In Progress | Jules prompt 09 — Greeting, two buttons, stats, ratio card, streak dots |
-| 3.2 | Log modal | 🔄 In Progress | Bundled with 3.1 — `src/components/LogModal.tsx` bottom sheet |
-| 3.3 | Streak dots component | 🔄 In Progress | Inline in Home screen |
-| 3.4 | Ratio bar component | 🔄 In Progress | Inline in Home screen |
-| 3.5 | Today's log list | 🔄 In Progress | Inline, collapsible |
-| 3.6 | Offline queue | ✅ Done | Already implemented in useLogs |
+| 3.1 | Home screen layout | ✅ Done | Greeting, two buttons, stats row |
+| 3.2 | Log modal | ✅ Done | Bottom sheet — category, context, note |
+| 3.3 | Streak dots component | ✅ Done | 7-day visual |
+| 3.4 | Ratio bar component | ✅ Done | 7-day own work % with personal avg |
+| 3.5 | Today's log list | ✅ Done | Collapsible, reverse chronological |
+| 3.6 | Offline queue | ✅ Done | Implemented in useLogs — AsyncStorage queue, flushes on reconnect and app foreground |
 
 ---
 
@@ -185,6 +185,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
 
+| 09 | Home screen + LogModal component | ✅ Merged |
 ---
 
 ## Notes for Future Sessions
