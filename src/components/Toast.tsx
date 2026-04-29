@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BrainIcon } from './icons/BrainIcon';
 import { ChipIcon } from './icons/ChipIcon';
 import { Colors, Fonts, FontSizes } from '../constants/theme';
@@ -13,6 +14,7 @@ interface ToastProps {
 export const Toast: React.FC<ToastProps> = ({ visible, type, onHide }) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
+  const { top: safeTop } = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -61,7 +63,8 @@ export const Toast: React.FC<ToastProps> = ({ visible, type, onHide }) => {
         {
           opacity,
           transform: [{ translateY }],
-          backgroundColor: isWin ? Colors.primary : '#7A5520',
+          backgroundColor: isWin ? Colors.primary : Colors.amber,
+          top: safeTop + 16,
         },
       ]}
       pointerEvents="none"
@@ -70,7 +73,7 @@ export const Toast: React.FC<ToastProps> = ({ visible, type, onHide }) => {
         {isWin ? (
           <BrainIcon size={12} color={Colors.white} />
         ) : (
-          <ChipIcon size={12} color="rgba(255,255,255,0.8)" />
+          <ChipIcon size={12} color={Colors.white} />
         )}
         <Text style={styles.text}>{isWin ? 'Win logged' : 'Logged'}</Text>
       </View>
@@ -81,14 +84,13 @@ export const Toast: React.FC<ToastProps> = ({ visible, type, onHide }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 78,
     alignSelf: 'center',
     borderRadius: 20,
     paddingVertical: 9,
     paddingHorizontal: 20,
     zIndex: 1000,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

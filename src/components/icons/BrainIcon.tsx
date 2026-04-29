@@ -1,12 +1,13 @@
 import React from 'react';
 import Svg, { Path, Line } from 'react-native-svg';
+import { Colors } from '../../constants/theme';
 
 interface Props {
   size?: number;
   color?: string;
 }
 
-export const BrainIcon: React.FC<Props> = ({ size = 16, color = 'white' }) => {
+export const BrainIcon: React.FC<Props> = ({ size = 16, color = Colors.white }) => {
   return (
     <Svg
       width={size}

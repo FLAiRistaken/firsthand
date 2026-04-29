@@ -17,6 +17,7 @@ export const Colors = {
   streakEmpty: '#EBEBEB',
   streakToday: '#CCCCCC',
   success: '#34C759',
+  black: '#000000',
 }
 
 export const Fonts = {

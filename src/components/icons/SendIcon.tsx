@@ -1,12 +1,13 @@
 import React from 'react';
 import Svg, { Line, Polygon } from 'react-native-svg';
+import { Colors } from '../../constants/theme';
 
 interface Props {
   size?: number;
   color?: string;
 }
 
-export const SendIcon: React.FC<Props> = ({ size = 15, color = 'white' }) => {
+export const SendIcon: React.FC<Props> = ({ size = 15, color = Colors.white }) => {
   return (
     <Svg
       width={size}

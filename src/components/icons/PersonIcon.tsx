@@ -1,12 +1,13 @@
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { Colors } from '../../constants/theme';
 
 interface Props {
   size?: number;
   color?: string;
 }
 
-export const PersonIcon: React.FC<Props> = ({ size = 17, color = '#999' }) => {
+export const PersonIcon: React.FC<Props> = ({ size = 17, color = Colors.textMuted }) => {
   return (
     <Svg
       width={size}

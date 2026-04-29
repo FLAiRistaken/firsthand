@@ -1,12 +1,13 @@
 import React from 'react';
 import Svg, { Rect, Line } from 'react-native-svg';
+import { Colors } from '../../constants/theme';
 
 interface Props {
   size?: number;
   color?: string;
 }
 
-export const ChipIcon: React.FC<Props> = ({ size = 16, color = '#888' }) => {
+export const ChipIcon: React.FC<Props> = ({ size = 16, color = Colors.textMuted }) => {
   return (
     <Svg
       width={size}
