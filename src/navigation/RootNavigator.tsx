@@ -8,6 +8,7 @@ import AuthScreen from '../screens/AuthScreen';
 import { getProfile } from '../lib/db';
 import { Colors } from '../constants/theme';
 import { supabase } from '../lib/supabase';
+import { DEV_BYPASS_AUTH, DEV_USER } from '../lib/devConfig';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,15 @@ export function RootNavigator() {
   const [isOnboarded, setIsOnboarded] = useState(false);
 
   const checkOnboardingStatus = async (providedSession?: Session | null) => {
+    // DEV ONLY — remove before production build
+    // Toggle setIsOnboarded(false/true) to test onboarding or main app directly
+    if (DEV_BYPASS_AUTH) {
+      setSession({ user: DEV_USER } as any);
+      setIsOnboarded(false); // Set to false to test onboarding, true to skip to main app
+      setIsLoading(false);
+      return;
+    }
+
     try {
       let activeSession = providedSession;
       if (activeSession === undefined) {
