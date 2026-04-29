@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -8,8 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
   ScrollView,
 } from 'react-native';
 import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
@@ -38,6 +36,27 @@ export const LogModal: React.FC<LogModalProps> = ({
   const [selectedContext, setSelectedContext] = useState<LogContext | undefined>();
   const [addingCategory, setAddingCategory] = useState<boolean>(false);
   const [newCategoryInput, setNewCategoryInput] = useState<string>('');
+
+  const resetState = () => {
+    setSelectedCategory('');
+    setNote('');
+    setSelectedContext(undefined);
+    setAddingCategory(false);
+    setNewCategoryInput('');
+  };
+
+  // Reset all state when the modal is dismissed so stale values don't
+  // appear the next time it opens.
+  useEffect(() => {
+    if (!visible) {
+      resetState();
+    }
+  }, [visible]);
+
+  // Reset category/context when switching between win and sin.
+  useEffect(() => {
+    resetState();
+  }, [type]);
 
   const isWin = type === 'win';
   const activeColor = isWin ? Colors.primary : Colors.amber;

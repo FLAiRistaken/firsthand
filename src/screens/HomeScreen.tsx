@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
@@ -12,7 +12,7 @@ import { Card } from '../components/Card';
 import { Toast } from '../components/Toast';
 import { LogModal } from '../components/LogModal';
 import Svg, { Polyline } from 'react-native-svg';
-import { LogEntry, LogContext } from '../lib/types';
+import { LogContext } from '../lib/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -20,13 +20,15 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function HomeScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
-  const { logs, addLog } = useLogs(userId);
+  const { logs, addLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
     personalAvg, aboveAverage, streakDots
   } = useStats(logs);
-  const { profile, updateProfile } = useProfile(userId);
+  const { profile, updateProfile, isLoading: profileLoading } = useProfile(userId);
   const insets = useSafeAreaInsets();
+
+  const isLoading = logsLoading || profileLoading;
 
   const [modalType, setModalType] = useState<'win' | 'sin' | null>(null);
   const [showTodayLogs, setShowTodayLogs] = useState<boolean>(false);
@@ -86,6 +88,17 @@ export default function HomeScreen() {
     return <View key={index} style={[styles.dotContainer, styles.dotPastEmpty]} />;
   };
 
+  // Mon=0 ... Sun=6 mapping that matches the streakDots array order (Mon-Sun)
+  const todayIndex = (new Date().getDay() + 6) % 7;
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -123,9 +136,9 @@ export default function HomeScreen() {
           onPress={() => setModalType('sin')}
         >
           <View style={styles.sinGhostIcon}>
-            <ChipIcon size={46} color="#8B6914" />
+            <ChipIcon size={46} color={Colors.amberDark} />
           </View>
-          <ChipIcon size={18} color="#C4A882" />
+          <ChipIcon size={18} color={Colors.sinIconMuted} />
           <Text style={styles.sinTitle}>I used AI</Text>
           <Text style={styles.sinSubtitle}>No judgment — just awareness</Text>
         </TouchableOpacity>
@@ -182,12 +195,12 @@ export default function HomeScreen() {
           <View style={styles.dotsRow}>
             {streakDots.map((hasWin, i) => (
               <View key={`day-${i}`} style={styles.dayCol}>
-                {renderStreakDot(hasWin, i === 6, i)}
+                {renderStreakDot(hasWin, i === todayIndex, i)}
                 <Text style={[
                   styles.dayLabel,
-                  i === 6 && styles.dayLabelToday,
-                  i !== 6 && hasWin && styles.dayLabelWin,
-                  i !== 6 && !hasWin && styles.dayLabelEmpty,
+                  i === todayIndex && styles.dayLabelToday,
+                  i !== todayIndex && hasWin && styles.dayLabelWin,
+                  i !== todayIndex && !hasWin && styles.dayLabelEmpty,
                 ]}>
                   {DAY_LABELS[i]}
                 </Text>
@@ -215,7 +228,7 @@ export default function HomeScreen() {
                   return (
                     <View key={log.id} style={[styles.logItem, isWin ? styles.logItemWin : styles.logItemSin]}>
                       <View style={[styles.logIconCircle, isWin ? styles.logIconCircleWin : styles.logIconCircleSin]}>
-                        {isWin ? <BrainIcon size={11} color={Colors.white} /> : <ChipIcon size={11} color="#AAA" />}
+                        {isWin ? <BrainIcon size={11} color={Colors.white} /> : <ChipIcon size={11} color={Colors.textMuted} />}
                       </View>
                       <Text style={[styles.logCategoryText, isWin ? styles.logCategoryTextWin : styles.logCategoryTextSin]} numberOfLines={1}>
                         {log.category}
@@ -229,7 +242,7 @@ export default function HomeScreen() {
             )}
           </View>
         )}
-        <View style={{ height: Spacing.screen }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       <LogModal
@@ -254,6 +267,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.appBg,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: Colors.appBg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -362,7 +381,7 @@ const styles = StyleSheet.create({
   sinTitle: {
     fontFamily: Fonts.serifSemiBold,
     fontSize: 19,
-    color: '#5A4A38',
+    color: Colors.sinText,
     marginBottom: 2,
     marginTop: 8,
   },
@@ -370,7 +389,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontWeight: '300',
     fontSize: 13,
-    color: '#B8A898',
+    color: Colors.sinTextLight,
   },
   statsCard: {
     flexDirection: 'row',
@@ -438,7 +457,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryLight,
   },
   ratioBadgeBelow: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: Colors.amberLight,
   },
   ratioBadgeText: {
     fontSize: FontSizes.xs,
@@ -569,7 +588,7 @@ const styles = StyleSheet.create({
   logItemWin: {
     backgroundColor: Colors.primaryLight,
     borderWidth: 1,
-    borderColor: '#C8E2D5',
+    borderColor: Colors.primaryBorder,
   },
   logItemSin: {
     backgroundColor: Colors.sinBg,
@@ -587,7 +606,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   logIconCircleSin: {
-    backgroundColor: '#DDD5C8',
+    backgroundColor: Colors.sinIconBg,
   },
   logCategoryText: {
     flex: 1,
@@ -598,7 +617,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   logCategoryTextSin: {
-    color: '#7A6654',
+    color: Colors.sinCategoryText,
   },
   logNoteText: {
     fontFamily: Fonts.sans,
@@ -608,5 +627,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textHint,
+  },
+  bottomSpacer: {
+    height: Spacing.screen,
   },
 });
