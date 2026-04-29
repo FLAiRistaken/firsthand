@@ -56,11 +56,11 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR befo
 ### 🔲 Phase 3 — Home Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 3.1 | Home screen layout | 🔲 Pending | Greeting, two buttons, stats row |
-| 3.2 | Log modal | 🔲 Pending | Bottom sheet — category, context, note |
-| 3.3 | Streak dots component | 🔲 Pending | 7-day visual |
-| 3.4 | Ratio bar component | 🔲 Pending | 7-day own work % with personal avg |
-| 3.5 | Today's log list | 🔲 Pending | Collapsible, reverse chronological |
+| 3.1 | Home screen layout | ✅ Done | Greeting, two buttons, stats row |
+| 3.2 | Log modal | ✅ Done | Bottom sheet — category, context, note |
+| 3.3 | Streak dots component | ✅ Done | 7-day visual |
+| 3.4 | Ratio bar component | ✅ Done | 7-day own work % with personal avg |
+| 3.5 | Today's log list | ✅ Done | Collapsible, reverse chronological |
 | 3.6 | Offline queue | ✅ Done | Implemented in useLogs — AsyncStorage queue, flushes on reconnect and app foreground |
 
 ---
@@ -162,6 +162,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, isNetworkError, AppState listener |
 | 08 | Onboarding screen | 🔲 Next |
 
+| 09 | Home screen + LogModal component | ✅ Merged |
 ---
 
 ## Notes for Future Sessions
