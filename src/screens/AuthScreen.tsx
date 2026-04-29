@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -31,12 +31,23 @@ const GoogleIcon = () => (
 export default function AuthScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    });
+    if (Platform.OS === 'ios') {
+      AppleAuthentication.isAvailableAsync()
+        .then(setAppleAvailable)
+        .catch((err) => console.error('Apple authentication availability check failed:', err));
+    }
+
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+    if (!webClientId || !iosClientId) {
+      throw new Error(
+        'Missing Google Sign-In environment variables. Ensure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID are set.'
+      );
+    }
+    GoogleSignin.configure({ webClientId, iosClientId });
   }, []);
 
   const handleAppleSignIn = async () => {
@@ -48,13 +59,14 @@ export default function AuthScreen() {
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-      if (credential.identityToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
-          provider: 'apple',
-          token: credential.identityToken,
-        });
-        if (error) throw error;
+      if (!credential.identityToken) {
+        throw new Error('Apple Sign-In failed: identity token is missing.');
       }
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+      if (error) throw error;
     } catch (error: any) {
       if (error.code !== 'ERR_REQUEST_CANCELED') {
         console.error('Apple sign in error:', error);
@@ -96,16 +108,20 @@ export default function AuthScreen() {
         </View>
 
         <View style={styles.buttonContainer}>
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-            cornerRadius={14}
-            style={styles.appleButton}
-            onPress={handleAppleSignIn}
-          />
-          {appleLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator color={Colors.white} />
+          {appleAvailable && (
+            <View style={styles.appleButtonWrapper}>
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={14}
+                style={styles.appleButton}
+                onPress={handleAppleSignIn}
+              />
+              {appleLoading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator color={Colors.white} />
+                </View>
+              )}
             </View>
           )}
 
@@ -178,6 +194,10 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: Spacing.md,
     marginBottom: Spacing.lg,
+  },
+  appleButtonWrapper: {
+    position: 'relative',
+    width: '100%',
   },
   appleButton: {
     width: '100%',

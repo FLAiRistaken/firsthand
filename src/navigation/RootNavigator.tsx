@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Session } from '@supabase/supabase-js';
 import { AppNavigator } from './AppNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AuthScreen from '../screens/AuthScreen';
@@ -12,23 +13,27 @@ const Stack = createNativeStackNavigator();
 
 export function RootNavigator() {
   const [isLoading, setIsLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isOnboarded, setIsOnboarded] = useState(false);
 
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = async (providedSession?: Session | null) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      let activeSession = providedSession;
+      if (activeSession === undefined) {
+        const {
+          data: { session: fetchedSession },
+        } = await supabase.auth.getSession();
+        activeSession = fetchedSession;
+      }
 
-      setSession(session);
+      setSession(activeSession);
 
-      if (!session?.user?.id) {
+      if (!activeSession?.user?.id) {
         setIsOnboarded(false);
         return;
       }
 
-      const profile = await getProfile(session.user.id);
+      const profile = await getProfile(activeSession.user.id);
       setIsOnboarded(!!profile?.onboarded);
     } catch (error) {
       console.error('Error checking onboarding status:', error);
@@ -43,10 +48,9 @@ export function RootNavigator() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, listenerSession) => {
       setIsLoading(true);
-      setSession(session);
-      checkOnboardingStatus();
+      checkOnboardingStatus(listenerSession);
     });
 
     return () => {
