@@ -116,18 +116,26 @@ export default function OnboardingScreen() {
 
       if (isComplete) {
         setDone(true);
+        setStep(6);
         const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
         const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
         const updates = {
-          ...profileRef.current,
+          name: profileRef.current.name,
+          occupation: profileRef.current.occupation || '',
+          goal: profileRef.current.goal || '',
+          success_definition: profileRef.current.success_definition || '',
           ai_tools_used: tools,
           primary_uses: uses,
           onboarded: true,
         };
 
         setTimeout(async () => {
-          await updateProfile(updates);
+          try {
+            await updateProfile(updates);
+          } catch (error) {
+            console.error('Failed to update profile:', error);
+          }
         }, 2200);
       } else {
         setStep((s: number) => s + 1);
