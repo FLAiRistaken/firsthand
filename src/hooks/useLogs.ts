@@ -1,15 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
 import { getLogs, insertLog, updateLog } from '../lib/db';
 
 const OFFLINE_QUEUE_KEY = 'firsthand_offline_queue';
 
+// Returns true only for errors that are likely caused by lack of network
+// connectivity. Server-side errors (4xx/5xx) have a numeric `status` and
+// should NOT be queued because they will never succeed on retry.
+const isNetworkError = (err: unknown): boolean => {
+  if (err instanceof TypeError) return true;
+  if (err !== null && typeof err === 'object' && 'status' in err) {
+    return (err as { status: number }).status === 0;
+  }
+  return false;
+};
+
 export interface UseLogsReturn {
   logs: LogEntry[];
   isLoading: boolean;
   error: string | null;
-  addLog: (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
+  addLog: (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }) => Promise<void>;
   editLog: (id: string, updates: Partial<Pick<LogEntry, 'note' | 'category' | 'context' | 'duration_mins'>>) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -86,13 +98,26 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
   useEffect(() => {
     fetchLogs();
     flushOfflineQueue();
+
+    // Flush the offline queue whenever the app returns to the foreground
+    // (covers the case where the user was offline, then reconnects without
+    //  unmounting this hook).
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        flushOfflineQueue();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, [userId, fetchLogs, flushOfflineQueue]);
 
-  const addLog = async (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id'>) => {
+  const addLog = async (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }) => {
     if (!userId) throw new Error('User not authenticated');
 
     // Create a temporary ID and timestamp for optimistic update
-    const tempId = `temp-${self.crypto.randomUUID()}`;
+    const tempId = `temp-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`}`;
     const now = new Date().toISOString();
 
     const optimisticLog: LogEntry = {
@@ -120,18 +145,22 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
       // Wait for insert then refresh to get real ID
       await fetchLogs();
     } catch (err) {
-      console.warn('Network error, queueing log for offline sync', err);
-      // Revert optimistic update? The spec says:
-      // "If insertLog throws, still updates local state and queues for retry"
-      // So we keep the optimistic update in local state.
-
-      try {
-        const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
-        const queue = queueData ? JSON.parse(queueData) : [];
-        queue.push(insertPayload);
-        await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-      } catch (storageErr) {
-        console.error('Failed to save to offline queue:', storageErr);
+      if (isNetworkError(err)) {
+        // Network/offline failure — keep the optimistic item and queue for retry
+        console.warn('Network error, queueing log for offline sync', err);
+        try {
+          const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+          const queue = queueData ? JSON.parse(queueData) : [];
+          queue.push(insertPayload);
+          await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+        } catch (storageErr) {
+          console.error('Failed to save to offline queue:', storageErr);
+        }
+      } else {
+        // Server-side error (validation, permissions, etc.) — revert optimistic update
+        console.error('Server rejected log insert, reverting optimistic update', err);
+        await fetchLogs();
+        throw err;
       }
     }
   };

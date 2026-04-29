@@ -19,16 +19,25 @@ const getStartOfDay = (date: Date = new Date()) => {
   return d.getTime();
 };
 
+// Utility to step N calendar days from a reference date and return start-of-day ms.
+// Uses Date#setDate so it is safe across DST transitions.
+const getStartOfDayOffset = (reference: Date, dayOffset: number): number => {
+  const d = new Date(reference);
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
+
 export const useStats = (logs: LogEntry[]): UseStatsReturn => {
   return useMemo(() => {
     const now = new Date();
     const startOfToday = getStartOfDay(now);
+    const startOfTomorrow = getStartOfDayOffset(now, 1);
 
-    // 1. Today's stats
+    // 1. Today's stats — strictly between start-of-today and start-of-tomorrow
     const todayLogs = logs.filter(log => {
       const logTime = new Date(log.timestamp).getTime();
-      // Assume logs are only ever in the past/present, so if it's >= startOfToday, it's today
-      return logTime >= startOfToday;
+      return logTime >= startOfToday && logTime < startOfTomorrow;
     });
 
     const todayWins = todayLogs.filter(log => log.type === 'win').length;
@@ -49,28 +58,31 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
       }
     });
 
-    const msInDay = 24 * 60 * 60 * 1000;
-    const startOfYesterday = startOfToday - msInDay;
+    const startOfYesterday = getStartOfDayOffset(now, -1);
 
     // Check if streak is alive
     if (winsByDay.has(startOfToday) || winsByDay.has(startOfYesterday)) {
       // Calculate streak length starting from today and going backwards
-      let checkDateMs = startOfToday;
+      let checkDate = new Date(now);
+      checkDate.setHours(0, 0, 0, 0);
 
       // If today doesn't have a win, but yesterday does, start counting from yesterday
       if (!winsByDay.has(startOfToday)) {
-        checkDateMs = startOfYesterday;
+        checkDate = new Date(now);
+        checkDate.setDate(checkDate.getDate() - 1);
+        checkDate.setHours(0, 0, 0, 0);
       }
 
-      while (winsByDay.has(checkDateMs)) {
+      while (winsByDay.has(checkDate.getTime())) {
         streak++;
-        checkDateMs -= msInDay;
+        checkDate.setDate(checkDate.getDate() - 1);
+        checkDate.setHours(0, 0, 0, 0);
       }
     }
 
     // 3. Week Ratio
-    // Filter logs to last 7 days (including today)
-    const sevenDaysAgoMs = startOfToday - (6 * msInDay);
+    // Filter logs to last 7 days (including today) — step 6 calendar days back
+    const sevenDaysAgoMs = getStartOfDayOffset(now, -6);
     const weekLogs = logs.filter(log => {
       return new Date(log.timestamp).getTime() >= sevenDaysAgoMs;
     });
@@ -102,11 +114,16 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
     // Convert so Monday is 0, Sunday is 6
     const jsDayToMonSun = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-    // Find timestamp of Monday of this week
-    const mondayMs = startOfToday - (jsDayToMonSun * msInDay);
+    // Find the start-of-day for Monday of this week using setDate (DST-safe)
+    const mondayDate = new Date(now);
+    mondayDate.setDate(mondayDate.getDate() - jsDayToMonSun);
+    mondayDate.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 7; i++) {
-      const dayMs = mondayMs + (i * msInDay);
+      const dayDate = new Date(mondayDate);
+      dayDate.setDate(dayDate.getDate() + i);
+      dayDate.setHours(0, 0, 0, 0);
+      const dayMs = dayDate.getTime();
       // Don't mark future days
       if (dayMs <= startOfToday) {
         streakDots[i] = winsByDay.has(dayMs);

@@ -5,7 +5,7 @@ import { getProfile, upsertProfile } from '../lib/db';
 export interface UseProfileReturn {
   profile: UserProfile | null;
   isLoading: boolean;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>) => Promise<void>;
 }
 
 export const useProfile = (userId: string | null): UseProfileReturn => {
@@ -34,7 +34,7 @@ export const useProfile = (userId: string | null): UseProfileReturn => {
     fetchProfile();
   }, [fetchProfile]);
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>) => {
     if (!userId) throw new Error('User not authenticated');
 
     // Optimistically update local state
