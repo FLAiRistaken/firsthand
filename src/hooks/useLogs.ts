@@ -161,7 +161,15 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
         console.warn('Network error, queueing log for offline sync', err);
         try {
           const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
-          const queue = queueData ? JSON.parse(queueData) : [];
+          let queue: Omit<LogEntry, 'id' | 'created_at'>[] = [];
+          if (queueData) {
+            try {
+              const parsed: unknown = JSON.parse(queueData);
+              queue = Array.isArray(parsed) ? (parsed as Omit<LogEntry, 'id' | 'created_at'>[]) : [];
+            } catch {
+              queue = [];
+            }
+          }
           queue.push(insertPayload);
           await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
         } catch (storageErr) {

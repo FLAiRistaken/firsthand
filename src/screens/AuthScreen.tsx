@@ -32,6 +32,7 @@ export default function AuthScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const [googleConfigError, setGoogleConfigError] = useState<string | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'ios' || Platform.OS === 'macos') {
@@ -43,11 +44,10 @@ export default function AuthScreen() {
     const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
     const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     if (!webClientId || !iosClientId) {
-      throw new Error(
-        'Missing Google Sign-In environment variables. Ensure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID are set.'
-      );
+      setGoogleConfigError('Google Sign-In is unavailable: missing environment configuration.');
+    } else {
+      GoogleSignin.configure({ webClientId, iosClientId });
     }
-    GoogleSignin.configure({ webClientId, iosClientId });
   }, []);
 
   const handleAppleSignIn = async () => {
@@ -67,8 +67,15 @@ export default function AuthScreen() {
         token: credential.identityToken,
       });
       if (error) throw error;
-    } catch (error: any) {
-      if (error.code !== 'ERR_REQUEST_CANCELED') {
+    } catch (error: unknown) {
+      if (
+        !(
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          (error as { code: string }).code === 'ERR_REQUEST_CANCELED'
+        )
+      ) {
         console.error('Apple sign in error:', error);
       }
     } finally {
@@ -126,9 +133,12 @@ export default function AuthScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.googleButton, (__DEV__ && Platform.OS === 'ios') && styles.googleButtonDisabled]}
+            style={[
+              styles.googleButton,
+              (googleConfigError || (__DEV__ && Platform.OS === 'ios')) && styles.googleButtonDisabled,
+            ]}
             onPress={handleGoogleSignIn}
-            disabled={googleLoading || (__DEV__ && Platform.OS === 'ios')}
+            disabled={googleLoading || !!googleConfigError || (__DEV__ && Platform.OS === 'ios')}
             activeOpacity={0.7}
           >
             {googleLoading ? (
@@ -138,8 +148,17 @@ export default function AuthScreen() {
                 <View style={styles.googleIconContainer}>
                   <GoogleIcon />
                 </View>
-                <Text style={[styles.googleButtonText, (__DEV__ && Platform.OS === 'ios') && styles.googleButtonTextDisabled]}>
-                  {__DEV__ && Platform.OS === 'ios' ? 'Available in full build' : 'Continue with Google'}
+                <Text
+                  style={[
+                    styles.googleButtonText,
+                    (googleConfigError || (__DEV__ && Platform.OS === 'ios')) && styles.googleButtonTextDisabled,
+                  ]}
+                >
+                  {googleConfigError
+                    ? 'Google Sign-In unavailable'
+                    : __DEV__ && Platform.OS === 'ios'
+                    ? 'Available in full build'
+                    : 'Continue with Google'}
                 </Text>
               </>
             )}

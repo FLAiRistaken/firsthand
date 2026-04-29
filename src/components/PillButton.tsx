@@ -36,7 +36,7 @@ export const PillButton: React.FC<PillButtonProps> = ({
   };
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[styles.animatedContainer, { transform: [{ scale }] }]}>
       <Pressable
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -68,6 +68,9 @@ export const PillButton: React.FC<PillButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
+  animatedContainer: {
+    // Wrapper for spring scale animation; layout driven by Pressable child
+  },
   button: {
     paddingVertical: 7,
     paddingHorizontal: 15,
