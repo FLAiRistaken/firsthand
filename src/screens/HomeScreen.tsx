@@ -22,7 +22,7 @@ export default function HomeScreen() {
   const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
-    personalAvg, aboveAverage, streakDots
+    personalAvg, ratioDiff, aboveAverage, streakDots
   } = useStats(logs);
   const { profile, updateProfile, isLoading: profileLoading } = useProfile();
   const insets = useSafeAreaInsets();
@@ -223,7 +223,7 @@ export default function HomeScreen() {
               <View style={styles.ratioRow}>
                 <Text style={styles.ratioLabel}>Own work — 7 days</Text>
                 <View style={styles.ratioRight}>
-                  {personalAvg !== null && (
+                  {ratioDiff !== null && ratioDiff !== 0 && (
                     <View style={[
                       styles.ratioBadge,
                       aboveAverage ? styles.ratioBadgeAbove : styles.ratioBadgeBelow
@@ -232,7 +232,7 @@ export default function HomeScreen() {
                         styles.ratioBadgeText,
                         aboveAverage ? styles.ratioBadgeTextAbove : styles.ratioBadgeTextBelow
                       ]}>
-                        {aboveAverage ? '↑' : '↓'}{Math.abs(weekRatio - personalAvg)}% {aboveAverage ? 'above' : 'below'} avg
+                        {aboveAverage ? '↑' : '↓'}{Math.abs(ratioDiff)}% {aboveAverage ? 'above' : 'below'} avg
                       </Text>
                     </View>
                   )}

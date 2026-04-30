@@ -8,6 +8,7 @@ export interface UseStatsReturn {
   streak: number;
   weekRatio: number | null;
   personalAvg: number | null;
+  ratioDiff: number | null;
   aboveAverage: boolean;
   streakDots: boolean[];
 }
@@ -100,7 +101,10 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
     }
 
     // 5. Above Average
-    const aboveAverage = weekRatio !== null && personalAvg !== null && weekRatio > personalAvg;
+    const ratioDiff = weekRatio !== null && personalAvg !== null
+      ? weekRatio - personalAvg
+      : null;
+    const aboveAverage = ratioDiff !== null && ratioDiff > 0;
 
     // 6. Streak Dots
     // Array of 7 booleans representing Mon-Sun of the current week
@@ -135,6 +139,7 @@ export const useStats = (logs: LogEntry[]): UseStatsReturn => {
       streak,
       weekRatio,
       personalAvg,
+      ratioDiff,
       aboveAverage,
       streakDots,
     };
