@@ -125,7 +125,19 @@ export default function OnboardingScreen() {
         email: trimmedEmail,
         password: accountPassword,
       });
-      if (signUpError) throw signUpError;
+      
+      if (signUpError) {
+        const isExisting = signUpError.message.toLowerCase().includes('already');
+        if (isExisting) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: trimmedEmail,
+            password: accountPassword,
+          });
+          if (signInError) throw signInError;
+        } else {
+          throw signUpError;
+        }
+      }
 
       // Wait briefly for session to propagate
       await new Promise(resolve => setTimeout(resolve, 500));
