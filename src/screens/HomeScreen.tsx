@@ -287,7 +287,7 @@ export default function HomeScreen() {
 
             {showTodayLogs && (
               <View style={styles.logsList}>
-                {[...todayLogs].reverse().map((log) => {
+                {todayLogs.map((log) => {
                   const isWin = log.type === 'win';
                   const timeStr = new Date(log.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                   return (
