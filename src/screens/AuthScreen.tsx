@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { GoogleSignin } from '../lib/googleSignIn';
+import { GoogleSignin, type GoogleSignInResult } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
 import Svg, { Path } from 'react-native-svg';
 
@@ -88,7 +88,7 @@ export default function AuthScreen() {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-      const idToken = (userInfo as any).data?.idToken;
+      const idToken = (userInfo as GoogleSignInResult).data?.idToken;
       if (idToken) {
         const { error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
