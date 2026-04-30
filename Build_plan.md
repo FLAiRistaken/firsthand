@@ -132,8 +132,8 @@ All Jules prompts are written by the Orchestrator. CodeRabbit reviews every PR. 
 | `src/lib/devConfig.ts` | DEV_BYPASS_AUTH active | ✅ Fully removed |
 | `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real `@react-native-google-signin/google-signin` once EAS dev build configured |
 | `.env.local` | Google client IDs are placeholders | Replace once Google Sign In configured |
-| `src/lib/anthropic.ts` | Sonnet model is `claude-sonnet-4-5` | Update to `claude-sonnet-4-6` (current production Sonnet) — bundle into Phase 7.3 |
-| `src/screens/CoachScreen.tsx` | Haiku model is `claude-haiku-4-5` | Update to versioned `claude-haiku-4-5-20251001` — bundle into Phase 7.3 |
+| `src/lib/anthropic.ts` | Sonnet model string | ✅ Fixed — `claude-sonnet-4-6` |
+| `src/screens/CoachScreen.tsx` | Haiku model string | ✅ Fixed — `claude-haiku-4-5-20251001` |
 | `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | Remove dead filter — Phase 7.12 |
 | `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | Rename to `deleteLog` for clarity — minor refactor |
 | `src/screens/CoachScreen.tsx` | Auto-scroll doesn't reach bottom of last message | Investigate `scrollToEnd` timing — Phase 7 polish |
@@ -231,6 +231,7 @@ Do not build any of the following until explicitly added to the build plan:
 - Offline queue `pendingDeleteTimestamps` ref to prevent undone-log re-insertion
 - ProfileContext silent sign-out removed (was incorrectly signing out new users)
 - `isCreatingAccount` flag added to ProfileContext
+- **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
 
 ---
 

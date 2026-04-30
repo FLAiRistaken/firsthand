@@ -13,7 +13,7 @@ export async function callClaude(
   messages: { role: 'user' | 'assistant'; content: string }[],
   system: string,
   maxTokens: number = 150,
-  model: string = 'claude-sonnet-4-5'
+  model: string = 'claude-sonnet-4-6'
 ): Promise<string> {
   const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
 
