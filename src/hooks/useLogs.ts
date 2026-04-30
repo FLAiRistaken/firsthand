@@ -224,8 +224,8 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
       try {
         const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
         if (queueData) {
-          const queue: Omit<LogEntry, 'id' | 'created_at'>[] = JSON.parse(queueData);
-          const newQueue = queue.filter(q => q.timestamp !== logToDelete.timestamp);
+          const queue: Omit<LogEntry, 'created_at'>[] = JSON.parse(queueData);
+          const newQueue = queue.filter((q) => q.id !== id && q.timestamp !== logToDelete?.timestamp);
           if (newQueue.length !== queue.length) {
             if (newQueue.length === 0) {
               await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
@@ -241,6 +241,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
 
     try {
       await dbSetLogCancelled(id, userId);
+      await fetchLogs(); // ensure server state is source of truth
     } catch (err: unknown) {
       // Revert — re-fetch to restore correct state
       fetchLogs();
