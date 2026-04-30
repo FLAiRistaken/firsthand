@@ -146,8 +146,7 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {Object.entries(groupedLogs).map(([dateKey, group]) => {
-          const { logs: entries, label } = group as any;
+        {Object.entries(groupedLogs).map(([dateKey, { logs: entries, label }]) => {
           const wCount = entries.filter((e: LogEntry) => e.type === 'win').length;
           const sCount = entries.filter((e: LogEntry) => e.type === 'sin').length;
           const total = wCount + sCount;
