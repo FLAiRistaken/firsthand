@@ -110,6 +110,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
 | 7.9 | TestFlight build | 🔲 Pending | First real device test |
 | 7.10 | App Store submission | 🔲 Pending | |
+| 7.11 | First-launch tutorial | 🔲 Pending | 4-step overlay after onboarding transition — highlights Home buttons, History, Coach. Shown once, stored in AsyncStorage |
 
 ---
 
@@ -125,6 +126,7 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 | `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real import of `@react-native-google-signin/google-signin` once a development build is configured |
 | `.env.local` | Google client IDs are placeholders | Replace with real OAuth credentials when Google Sign In is configured |
 | `BUILD_PLAN.md` (Decisions Log) | Said model is Haiku, but code is Sonnet after Copilot's revert | Code is `claude-sonnet-4-5`. Decisions Log updated below. |
+| `OnboardingScreen / ProfileContext` | Brief onboarding flicker during account creation — onAuthStateChange fires before setProfile completes | Add `isCreatingAccount` flag to ProfileContext to suppress routing during account creation |
 
 ---
 
@@ -183,11 +185,8 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
 | 07b | DEV_BYPASS_AUTH | ✅ Merged via Antigravity — `__DEV__ && true` pattern |
 | 07c | Google Sign In stub | ✅ Merged via Antigravity — Expo Go compatibility |
-<<<<<<< Updated upstream
 | 07d | Email/password auth | ✅ Merged |
-=======
 | 07e | Remove DEV_BYPASS_AUTH | ✅ Merged |
->>>>>>> Stashed changes
 | 07f | AuthScreen design fix + missing theme tokens | ✅ Merged |
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
