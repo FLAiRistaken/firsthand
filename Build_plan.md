@@ -185,6 +185,7 @@ Do not build any of the following until explicitly added to the build plan:
 =======
 | 07e | Remove DEV_BYPASS_AUTH | ✅ Merged |
 >>>>>>> Stashed changes
+| 07f | AuthScreen design fix + missing theme tokens | ✅ Merged |
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
