@@ -25,6 +25,7 @@ export interface UserProfile {
   custom_categories: string[];
   created_at: string;
   onboarded: boolean;
+  default_context?: LogContext | null;
 }
 
 export interface AppState {

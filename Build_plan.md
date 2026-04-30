@@ -93,7 +93,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔲 Phase 6 — Profile Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 6.1 | Profile screen | ✅ Done | Name, occupation, custom categories management, view onboarding answers, sign out |
+| 6.1 | Profile screen | ✅ Done | Name, occupation, custom categories management, view onboarding answers, sign out, behaviour settings |
 
 ---
 
@@ -203,8 +203,9 @@ Do not build any of the following until explicitly added to the build plan:
 | 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | ✅ Merged |
 | 11 | Coach screen | ✅ Merged |
-| 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
+| 12 | Profile screen | ✅ Merged |
 | 13 | ProfileContext — shared profile state | ✅ Merged |
+| 17 | Profile screen rework — edit UX, visual refresh, behaviour settings | ✅ Merged |
 
 | 09 | Home screen + LogModal component | ✅ Merged |
 | 09b | Undo window + deleteLog | ✅ Merged |
@@ -224,6 +225,7 @@ Do not build any of the following until explicitly added to the build plan:
 - ProfileContext silent sign-out removed (was incorrectly signing out new users)
 - `isCreatingAccount` flag added to ProfileContext
 - **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
+- **HF-04**: Profile rework PR fixes — icon paths, LogContext type, LogModal dep array, error handling — ✅ Merged
 - **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
 
 ---
