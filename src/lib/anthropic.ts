@@ -33,7 +33,7 @@ export async function callClaude(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model,
+        model: 'claude-sonnet-4-5',
         max_tokens: maxTokens,
         system,
         messages,

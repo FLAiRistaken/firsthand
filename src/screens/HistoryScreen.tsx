@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useProfile } from '../hooks/useProfile';
@@ -10,13 +13,14 @@ import { PersonIcon } from '../components/icons/PersonIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { ChipIcon } from '../components/icons/ChipIcon';
 import { EditLogModal } from '../components/EditLogModal';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+
 import type { LogEntry } from '../lib/types';
 import Svg, { Path } from 'react-native-svg';
 
 type FilterType = 'all' | 'wins' | 'AI uses';
 
 export default function HistoryScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const insets = useSafeAreaInsets();
   const { userId } = useAuth();
   const { logs, editLog, isLoading, error } = useLogs(userId);
@@ -107,7 +111,7 @@ export default function HistoryScreen() {
   }
 
   return (
-    <ErrorBoundary onError={(error, errorInfo) => console.error('HistoryScreen error:', error, errorInfo)}>
+
       <View style={styles.container}>
       {/* Fixed Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -116,7 +120,7 @@ export default function HistoryScreen() {
             <View style={styles.brandDot} />
             <Text style={styles.brandText}>Firsthand</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => {}}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
             <PersonIcon size={16} color={Colors.primary} />
           </TouchableOpacity>
         </View>
@@ -284,7 +288,7 @@ export default function HistoryScreen() {
         customCategories={profile?.custom_categories ?? []}
       />
     </View>
-    </ErrorBoundary>
+
   );
 }
 

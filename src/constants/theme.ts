@@ -72,6 +72,7 @@ export const Spacing = {
 export const Sizes = {
   buttonHeight: 52,
   iconSm: 18,
+  avatar: 72,
 }
 
 export const BorderWidths = {

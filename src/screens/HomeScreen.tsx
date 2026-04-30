@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useStats } from '../hooks/useStats';
@@ -17,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function HomeScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
   const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
@@ -164,7 +168,9 @@ export default function HomeScreen() {
           <Text style={styles.headerTitle}>Firsthand</Text>
         </View>
         <View style={styles.headerRight}>
-          <PersonIcon size={18} color={Colors.textSecondary} />
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <PersonIcon size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -314,7 +320,7 @@ export default function HomeScreen() {
       {undoTargets.size > 0 && (() => {
         // Show the most recent entry (last added to the Map)
         const entries = Array.from(undoTargets.values());
-        const mostRecentEntry = entries[entries.length - 1];
+        const mostRecentEntry = entries[entries.length - 1] as LogEntry;
         return (
           <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
             <Card style={styles.undoCard}>
