@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes } from '../constants/theme';
 import { callClaude } from '../lib/anthropic';
-import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUserProfile } from '../lib/prompts';
+import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUserProfile, sanitizePromptValue } from '../lib/prompts';
 import { upsertProfile } from '../lib/db';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
@@ -77,7 +77,7 @@ export default function OnboardingScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const initConversation = async () => {
+    const initConversation = async (): Promise<void> => {
       try {
         const response = await callClaude([{ role: 'user', content: 'begin' }], ONBOARDING_SYSTEM);
         setMessages([{ role: 'assistant', content: response }]);
@@ -112,7 +112,7 @@ export default function OnboardingScreen() {
     }
   }, [showAccountCreation]);
 
-  const handleCreateAccount = async () => {
+  const handleCreateAccount = async (): Promise<void> => {
     const trimmedEmail = accountEmail.trim();
     if (!trimmedEmail || !accountPassword) return;
     if (accountPassword.length < 6) {
@@ -191,10 +191,11 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (): Promise<void> => {
     if (!input.trim() || loading || done) return;
 
     const userContent = input.trim();
+    const sanitizedContent = sanitizePromptValue(userContent);
     setInput('');
     setLoading(true);
 
@@ -205,7 +206,7 @@ export default function OnboardingScreen() {
     else if (step === 4) profileRef.current.goal = userContent;
     else if (step === 5) profileRef.current.success_definition = userContent;
 
-    const newMessages = [...messages, { role: 'user' as const, content: userContent }];
+    const newMessages = [...messages, { role: 'user' as const, content: sanitizedContent }];
     setMessages(newMessages);
 
     try {

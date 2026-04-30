@@ -17,10 +17,10 @@ import type { LogContext } from '../lib/types';
 interface LogModalProps {
   visible: boolean;
   type: 'win' | 'sin';
-  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => void;
+  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => Promise<void>;
   onClose: () => void;
   customCategories: string[];
-  onAddCategory: (category: string) => void;
+  onAddCategory: (category: string) => Promise<void>;
 }
 
 export const LogModal = ({
@@ -36,6 +36,7 @@ export const LogModal = ({
   const [selectedContext, setSelectedContext] = useState<LogContext | undefined>();
   const [addingCategory, setAddingCategory] = useState<boolean>(false);
   const [newCategoryInput, setNewCategoryInput] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
   const resetState = () => {
     setSelectedCategory('');
@@ -64,32 +65,46 @@ export const LogModal = ({
 
   const allCategories = [...DEFAULT_CATEGORIES, ...customCategories];
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedCategory) return;
-    onSave({
-      type,
-      category: selectedCategory,
-      note: note.trim(),
-      context: selectedContext,
-    });
-    // Reset state
-    setSelectedCategory('');
-    setNote('');
-    setSelectedContext(undefined);
-    setAddingCategory(false);
-    setNewCategoryInput('');
+    setLoading(true);
+    try {
+      await onSave({
+        type,
+        category: selectedCategory,
+        note: note.trim(),
+        context: selectedContext,
+      });
+      // Reset state
+      setSelectedCategory('');
+      setNote('');
+      setSelectedContext(undefined);
+      setAddingCategory(false);
+      setNewCategoryInput('');
+    } catch (err: unknown) {
+      console.error('Failed to save log', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddCategorySubmit = () => {
+  const handleAddCategorySubmit = async () => {
     const trimmed = newCategoryInput.trim().toLowerCase();
-    if (trimmed && !allCategories.includes(trimmed)) {
-      onAddCategory(trimmed);
-      setSelectedCategory(trimmed);
-    } else if (trimmed) {
-      setSelectedCategory(trimmed);
+    setLoading(true);
+    try {
+      if (trimmed && !allCategories.includes(trimmed)) {
+        await onAddCategory(trimmed);
+        setSelectedCategory(trimmed);
+      } else if (trimmed) {
+        setSelectedCategory(trimmed);
+      }
+      setAddingCategory(false);
+      setNewCategoryInput('');
+    } catch (err: unknown) {
+      console.error('Failed to add category', err);
+    } finally {
+      setLoading(false);
     }
-    setAddingCategory(false);
-    setNewCategoryInput('');
   };
 
   return (
@@ -137,10 +152,12 @@ export const LogModal = ({
                       autoFocus
                       onSubmitEditing={handleAddCategorySubmit}
                       returnKeyType="done"
+                      editable={!loading}
                     />
                     <TouchableOpacity
-                      style={[styles.newCategoryAddBtn, { backgroundColor: activeColor }]}
+                      style={[styles.newCategoryAddBtn, { backgroundColor: activeColor, opacity: loading ? 0.5 : 1 }]}
                       onPress={handleAddCategorySubmit}
+                      disabled={loading}
                     >
                       <Text style={styles.newCategoryAddText}>add</Text>
                     </TouchableOpacity>
@@ -210,18 +227,18 @@ export const LogModal = ({
             />
 
             <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={loading}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.saveBtn,
-                  { backgroundColor: selectedCategory ? activeColor : Colors.streakEmpty },
+                  { backgroundColor: selectedCategory ? activeColor : Colors.streakEmpty, opacity: loading ? 0.5 : 1 },
                 ]}
                 onPress={handleSave}
-                disabled={!selectedCategory}
+                disabled={!selectedCategory || loading}
               >
-                <Text style={styles.saveText}>Save</Text>
+                <Text style={styles.saveText}>{loading ? 'Saving...' : 'Save'}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

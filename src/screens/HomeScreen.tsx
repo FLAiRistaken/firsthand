@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useStats } from '../hooks/useStats';
@@ -22,7 +22,7 @@ export default function HomeScreen() {
   const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
-    personalAvg, aboveAverage, streakDots
+    personalAvg, ratioDiff, aboveAverage, streakDots
   } = useStats(logs);
   const { profile, updateProfile, isLoading: profileLoading } = useProfile();
   const insets = useSafeAreaInsets();
@@ -77,7 +77,11 @@ export default function HomeScreen() {
     undoTimersRef.current.set(entry.id, timer);
   };
 
-  const handleUndo = async (entryId: string) => {
+  const isErrorWithCode = (err: unknown): err is Error & { code?: string } => {
+    return err instanceof Error && 'code' in err;
+  };
+
+  const handleUndo = async (entryId: string): Promise<void> => {
     const target = undoTargets.get(entryId);
     if (!target) return;
 
@@ -95,7 +99,7 @@ export default function HomeScreen() {
         undoTimersRef.current.delete(entryId);
       }
     } catch (err: unknown) {
-      if (err instanceof Error && (err as any).code === 'EXPIRED') {
+      if (isErrorWithCode(err) && err.code === 'EXPIRED') {
         Alert.alert('Too late to undo', 'Logs can only be undone within 30 seconds.');
       } else {
         // Failure: keep the undo target and timer intact so user can retry
@@ -104,7 +108,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => {
+  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }): Promise<void> => {
     try {
       const newLog = await addLog(entry);
       showUndoToast(newLog);
@@ -114,7 +118,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAddCategory = async (cat: string) => {
+  const handleAddCategory = async (cat: string): Promise<void> => {
     const currentCats = profile?.custom_categories ?? [];
     if (!currentCats.includes(cat)) {
       await updateProfile({ custom_categories: [...currentCats, cat] });
@@ -219,7 +223,7 @@ export default function HomeScreen() {
               <View style={styles.ratioRow}>
                 <Text style={styles.ratioLabel}>Own work — 7 days</Text>
                 <View style={styles.ratioRight}>
-                  {personalAvg !== null && (
+                  {ratioDiff !== null && ratioDiff !== 0 && (
                     <View style={[
                       styles.ratioBadge,
                       aboveAverage ? styles.ratioBadgeAbove : styles.ratioBadgeBelow
@@ -228,7 +232,7 @@ export default function HomeScreen() {
                         styles.ratioBadgeText,
                         aboveAverage ? styles.ratioBadgeTextAbove : styles.ratioBadgeTextBelow
                       ]}>
-                        {aboveAverage ? '↑' : '↓'}{Math.abs(weekRatio - personalAvg)}% {aboveAverage ? 'above' : 'below'} avg
+                        {aboveAverage ? '↑' : '↓'}{Math.abs(ratioDiff)}% {aboveAverage ? 'above' : 'below'} avg
                       </Text>
                     </View>
                   )}
@@ -351,18 +355,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.screen,
-    paddingBottom: 10,
+    paddingBottom: Spacing.smLg,
     backgroundColor: Colors.appBg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   greenDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: Spacing.sm,
+    height: Spacing.sm,
+    borderRadius: Spacing.xs,
     backgroundColor: Colors.primary,
   },
   headerTitle: {
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
   },
   greetingName: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 30,
+    fontSize: FontSizes.hero,
     color: Colors.textPrimary,
     lineHeight: 36,
   },
@@ -396,18 +400,18 @@ const styles = StyleSheet.create({
     fontWeight: '300', // sansLight approx
     fontSize: FontSizes.md,
     color: Colors.textMuted,
-    marginTop: 5,
+    marginTop: Spacing.xs + 1,
   },
   winButton: {
     backgroundColor: Colors.primary,
     borderRadius: Radius.xxl,
-    paddingVertical: 24,
-    paddingHorizontal: 22,
-    marginBottom: 10,
+    paddingVertical: Spacing.xxl,
+    paddingHorizontal: Spacing.screen,
+    marginBottom: Spacing.smLg,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
-    shadowRadius: 14,
+    shadowRadius: Radius.lg,
     elevation: 8,
     position: 'relative',
     overflow: 'hidden',
@@ -421,25 +425,26 @@ const styles = StyleSheet.create({
   },
   winTitle: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 21,
+    fontSize: FontSizes.xl,
     color: Colors.white,
     marginBottom: 2,
-    marginTop: 9,
+    marginTop: Spacing.smLg - 1,
   },
   winSubtitle: {
     fontFamily: Fonts.sans,
     fontWeight: '300',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: FontSizes.base,
+    color: Colors.white,
+    opacity: 0.55,
   },
   sinButton: {
     backgroundColor: Colors.sinBg,
     borderWidth: 1.5,
     borderColor: Colors.sinBorder,
     borderRadius: Radius.xxl,
-    paddingVertical: 18,
-    paddingHorizontal: 22,
-    marginBottom: 14,
+    paddingVertical: Spacing.lg + 2,
+    paddingHorizontal: Spacing.screen,
+    marginBottom: Spacing.lg - 2,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -452,22 +457,22 @@ const styles = StyleSheet.create({
   },
   sinTitle: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 19,
+    fontSize: FontSizes.xl - 2,
     color: Colors.sinText,
     marginBottom: 2,
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   sinSubtitle: {
     fontFamily: Fonts.sans,
     fontWeight: '300',
-    fontSize: 13,
+    fontSize: FontSizes.base,
     color: Colors.sinTextLight,
   },
   statsCard: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 10,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.smLg,
   },
   statCol: {
     flex: 1,
@@ -480,17 +485,17 @@ const styles = StyleSheet.create({
   },
   statValueWin: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 22,
+    fontSize: FontSizes.xxl - 2,
     color: Colors.primary,
   },
   statValueSin: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 22,
+    fontSize: FontSizes.xxl - 2,
     color: Colors.amber,
   },
   statValueStreak: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 22,
+    fontSize: FontSizes.xxl - 2,
     color: Colors.textSecondary,
   },
   statLabel: {
@@ -521,9 +526,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   ratioBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 7,
-    borderRadius: 8,
+    paddingVertical: Spacing.xs / 2,
+    paddingHorizontal: Spacing.sm - 1,
+    borderRadius: Radius.sm,
   },
   ratioBadgeAbove: {
     backgroundColor: Colors.primaryLight,
@@ -543,11 +548,11 @@ const styles = StyleSheet.create({
   },
   ratioValue: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 20,
+    fontSize: FontSizes.xl - 1,
     color: Colors.primary,
   },
   ratioBarBg: {
-    height: 4,
+    height: Spacing.xs,
     backgroundColor: Colors.border,
     borderRadius: 2,
     width: '100%',
@@ -562,22 +567,22 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     textAlign: 'center',
-    marginVertical: 4,
+    marginVertical: Spacing.xs,
   },
   ratioDivider: {
     height: 1,
     backgroundColor: Colors.border,
-    marginVertical: 10,
+    marginVertical: Spacing.smLg,
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: Spacing.sm - 2,
     paddingHorizontal: 2,
   },
   dayCol: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
   },
   dotContainer: {
     width: '100%',
@@ -588,27 +593,27 @@ const styles = StyleSheet.create({
   },
   dotWin: {
     backgroundColor: Colors.primary,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.primary,
   },
   dotCheck: {
-    width: 10,
-    height: 10,
+    width: Spacing.smLg,
+    height: Spacing.smLg,
   },
   dotTodayEmpty: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.streakToday,
   },
   dotTodayInner: {
-    width: 3,
-    height: 3,
+    width: Spacing.xs - 1,
+    height: Spacing.xs - 1,
     borderRadius: 1.5,
     backgroundColor: Colors.streakToday,
   },
   dotPastEmpty: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.streakEmpty,
   },
   dayLabel: {
@@ -719,11 +724,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     backgroundColor: Colors.cardBg,
     borderColor: Colors.border,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: Radius.sm,
     elevation: 4,
   },
   undoIconCircle: {

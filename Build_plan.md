@@ -84,9 +84,9 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔲 Phase 5 — Coach Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 5.1 | Coach screen layout | 🔲 Pending | Chat UI, coach identity bar |
-| 5.2 | Anthropic API integration | 🔲 Pending | Uses `callClaude` and `COACH_SYSTEM(profile)` |
-| 5.3 | Quick prompts | 🔲 Pending | Shown on first open, disappear after first user message |
+| 5.1 | Coach screen layout | ✅ Done | Chat UI, coach identity bar |
+| 5.2 | Anthropic API integration | ✅ Done | Uses `callClaude` and `COACH_SYSTEM(profile)` |
+| 5.3 | Quick prompts | ✅ Done | Shown on first open, disappear after first user message |
 
 ---
 
@@ -191,7 +191,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | ✅ Merged |
-| 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
+| 11 | Coach screen | ✅ Merged |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
 | 13 | ProfileContext — shared profile state | ✅ Merged |
 

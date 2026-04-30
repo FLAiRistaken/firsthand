@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
@@ -42,6 +42,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const pendingDeleteTimestamps = useRef<Set<string>>(new Set());
 
   const fetchLogs = useCallback(async () => {
     if (!userId) {
@@ -73,13 +74,28 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
       const queue: Omit<LogEntry, 'id' | 'created_at'>[] = JSON.parse(queueData);
       if (queue.length === 0) return;
 
-      console.log(`Flushing ${queue.length} offline logs to Supabase`);
+      const filteredQueue = queue.filter(
+        (entry: Omit<LogEntry, 'id' | 'created_at'>) =>
+          !pendingDeleteTimestamps.current.has(entry.timestamp)
+      );
 
-      const newQueue = [...queue];
+      if (filteredQueue.length !== queue.length) {
+        if (filteredQueue.length === 0) {
+          await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+        } else {
+          await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(filteredQueue));
+        }
+      }
+
+      if (filteredQueue.length === 0) return;
+
+      console.log(`Flushing ${filteredQueue.length} offline logs to Supabase`);
+
+      const newQueue = [...filteredQueue];
       const successfullyInserted: LogEntry[] = [];
 
-      for (let i = 0; i < queue.length; i++) {
-        const item = queue[i];
+      for (let i = 0; i < filteredQueue.length; i++) {
+        const item = filteredQueue[i];
         // Ensure user_id is set correctly for the current user
         const itemToInsert = { ...item, user_id: userId };
 
@@ -88,8 +104,14 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
           successfullyInserted.push(insertedLog);
           newQueue.shift(); // Remove the item we just successfully inserted
         } catch (err) {
-          console.error('Failed to flush log, keeping in queue:', err);
-          break; // Stop trying if we hit an error (likely still offline)
+          if (isNetworkError(err)) {
+            console.error('Failed to flush log (network error), keeping in queue:', err);
+            break; // Stop trying if we hit a network error (likely still offline)
+          } else {
+            console.error('Terminal server error flushing log, discarding item:', err);
+            newQueue.shift(); // Remove poisoned item to avoid blocking queue
+            // continue loop
+          }
         }
       }
 
@@ -154,8 +176,12 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
 
     try {
       const insertedLog = await insertLog(insertPayload);
-      // Wait for insert then refresh to get real ID
-      await fetchLogs();
+      // Replace optimistic entry with server-confirmed entry
+      setLogs((prev: LogEntry[]) => prev.map(l =>
+        l.id === tempId ? insertedLog : l
+      ).sort((a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ));
       return insertedLog;
     } catch (err) {
       if (isNetworkError(err)) {
@@ -209,8 +235,33 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
   const deleteLog = async (id: string): Promise<void> => {
     if (!userId) return;
 
+    const logToDelete = logs.find(l => l.id === id);
+
     // Optimistic update — remove from local state immediately
     setLogs((prev: LogEntry[]) => prev.filter(l => l.id !== id));
+
+    if (logToDelete?.timestamp) {
+      pendingDeleteTimestamps.current.add(logToDelete.timestamp);
+    }
+
+    if (logToDelete) {
+      try {
+        const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+        if (queueData) {
+          const queue: Omit<LogEntry, 'created_at'>[] = JSON.parse(queueData);
+          const newQueue = queue.filter((q) => q.id !== id && q.timestamp !== logToDelete?.timestamp);
+          if (newQueue.length !== queue.length) {
+            if (newQueue.length === 0) {
+              await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+            } else {
+              await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.error('Failed to remove from offline queue on delete:', storageErr);
+      }
+    }
 
     try {
       await dbSetLogCancelled(id, userId);
