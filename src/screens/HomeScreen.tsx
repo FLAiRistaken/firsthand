@@ -73,15 +73,16 @@ export default function HomeScreen() {
     if (!undoTarget) return;
     const target = undoTarget;
 
-    setUndoTarget(null);
-    if (undoTimerRef.current) {
-      clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = null;
-    }
-
     try {
       await deleteLog(target.id);
+      // Success: clear the undo UI
+      setUndoTarget(null);
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
     } catch {
+      // Failure: keep the undo target and timer intact so user can retry
       Alert.alert('Could not undo', 'The log could not be removed. Try again.');
     }
   };
