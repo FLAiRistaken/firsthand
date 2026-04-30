@@ -137,7 +137,7 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 | Framework | React Native (Expo SDK 54) | iOS first, cross-platform later |
 | Database / Auth | Supabase | Auth, RLS, typed client, realtime |
 | Hosting (future backend) | Railway | Already paid for, ideal for Anthropic proxy |
-| AI model | `claude-sonnet-4-5` | Reverted from Haiku by Copilot review. Sonnet's quality matters for the onboarding reflection moment. Revisit if cost becomes an issue. |
+| AI model | Sonnet for Onboarding, Haiku for Coach | Quality matters for onboarding reflection. Coach is rigid by design — Haiku is sufficient and significantly cheaper. |
 | Fonts | Fraunces (serif) + DM Sans | Warm, distinctive, not generic |
 | No log deletion | Enforced in `db.ts` | Integrity of the log is the product |
 | No win→sin editing | Enforced in `updateLog` types | Same reason |
@@ -200,6 +200,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 09c | Undo expiry error propagation | ✅ Merged |
 | 14 | Fix stale session routing bug | ✅ Merged |
 | 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
+| 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
 ---
 
 ## Notes for Future Sessions
