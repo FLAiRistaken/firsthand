@@ -88,8 +88,14 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
           successfullyInserted.push(insertedLog);
           newQueue.shift(); // Remove the item we just successfully inserted
         } catch (err) {
-          console.error('Failed to flush log, keeping in queue:', err);
-          break; // Stop trying if we hit an error (likely still offline)
+          if (isNetworkError(err)) {
+            console.error('Failed to flush log (network error), keeping in queue:', err);
+            break; // Stop trying if we hit a network error (likely still offline)
+          } else {
+            console.error('Terminal server error flushing log, discarding item:', err);
+            newQueue.shift(); // Remove poisoned item to avoid blocking queue
+            // continue loop
+          }
         }
       }
 
@@ -209,8 +215,29 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
   const deleteLog = async (id: string): Promise<void> => {
     if (!userId) return;
 
+    const logToDelete = logs.find(l => l.id === id);
+
     // Optimistic update — remove from local state immediately
     setLogs((prev: LogEntry[]) => prev.filter(l => l.id !== id));
+
+    if (logToDelete) {
+      try {
+        const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+        if (queueData) {
+          const queue: Omit<LogEntry, 'id' | 'created_at'>[] = JSON.parse(queueData);
+          const newQueue = queue.filter(q => q.timestamp !== logToDelete.timestamp);
+          if (newQueue.length !== queue.length) {
+            if (newQueue.length === 0) {
+              await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+            } else {
+              await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.error('Failed to remove from offline queue on delete:', storageErr);
+      }
+    }
 
     try {
       await dbSetLogCancelled(id, userId);

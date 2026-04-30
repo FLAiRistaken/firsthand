@@ -21,7 +21,7 @@ export type CoachUserProfile = {
   success_definition?: string | null;
 };
 
-const sanitizePromptValue = (value: string, maxLength = 100): string => {
+export const sanitizePromptValue = (value: string, maxLength = 100): string => {
   return value
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/[\x00-\x1F\x7F]/g, '')

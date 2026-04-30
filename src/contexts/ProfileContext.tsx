@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserProfile } from '../lib/types';
 import { getProfile, upsertProfile } from '../lib/db';
-import { supabase } from '../lib/supabase';
 
 export interface ProfileContextValue {
   profile: UserProfile | null;
@@ -31,8 +30,12 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
       setIsLoading(true);
       const data = await getProfile(userId);
       setProfile(data);
-    } catch (err) {
-      console.error('Failed to fetch profile:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Failed to fetch profile:', err.message);
+      } else {
+        console.error('Failed to fetch profile:', String(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +45,7 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
     fetchProfile();
   }, [fetchProfile]);
 
-  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>) => {
+  const updateProfile = async (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>): Promise<void> => {
     if (!userId) throw new Error('User not authenticated');
 
     try {
@@ -70,8 +73,12 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
       await upsertProfile({ ...updates, id: userId });
       // Confirm from server — critical for RootNavigator to see onboarded: true
       await fetchProfile();
-    } catch (err) {
-      console.error('Failed to update profile:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error('Failed to update profile:', err.message);
+      } else {
+        console.error('Failed to update profile:', String(err));
+      }
       // Revert optimistic update on failure by refetching
       await fetchProfile();
       throw err;

@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, 
 import { Colors, Fonts, FontSizes, Spacing, Radius, Sizes, BorderWidths } from '../constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/RootNavigator';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin, type GoogleSignInResult } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
@@ -41,7 +43,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Auth'>>();
 
   useEffect(() => {
     if (Platform.OS === 'ios' || Platform.OS === 'macos') {
@@ -60,7 +62,7 @@ export default function AuthScreen() {
     }
   }, []);
 
-  const handleAppleSignIn = async () => {
+  const handleAppleSignIn = async (): Promise<void> => {
     setAppleLoading(true);
     try {
       const credential = await AppleAuthentication.signInAsync({
@@ -93,7 +95,7 @@ export default function AuthScreen() {
     }
   };
 
-  const handleEmailAuth = async () => {
+  const handleEmailAuth = async (): Promise<void> => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) return;
@@ -117,21 +119,28 @@ export default function AuthScreen() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (): Promise<void> => {
     setGoogleLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const idToken = (userInfo as GoogleSignInResult).data?.idToken;
-      if (idToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
-          provider: 'google',
-          token: idToken,
-        });
-        if (error) throw error;
+      if (!idToken) {
+        throw new Error('Google Sign-In failed: No ID token returned.');
       }
-    } catch (error) {
-      console.error('Google sign in error:', error);
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+      if (error) throw error;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        Alert.alert('Google Sign-In failed', error.message);
+        console.error('Google sign in error:', error.message);
+      } else {
+        Alert.alert('Google Sign-In failed', 'An unknown error occurred.');
+        console.error('Google sign in error:', error);
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -168,7 +177,7 @@ export default function AuthScreen() {
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={14}
+                cornerRadius={Radius.md}
                 style={styles.appleButton}
                 onPress={handleAppleSignIn}
               />
