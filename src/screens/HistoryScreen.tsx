@@ -19,13 +19,22 @@ type FilterType = 'all' | 'wins' | 'AI uses';
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { userId } = useAuth();
-  const { logs, editLog } = useLogs(userId);
+  const { logs, editLog, isLoading, error } = useLogs(userId);
   const { profile } = useProfile();
 
   const [filter, setFilter] = useState<FilterType>('all');
+
+  // Helper to get today and yesterday date keys
+  const getTodayKey = () => new Date().toISOString().slice(0, 10);
+  const getYesterdayKey = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().slice(0, 10);
+  };
+
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({
-    Today: true,
-    Yesterday: true,
+    [getTodayKey()]: true,
+    [getYesterdayKey()]: true,
   });
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
 
@@ -34,7 +43,7 @@ export default function HistoryScreen() {
   };
 
   const groupedLogs = useMemo(() => {
-    const grouped: Record<string, LogEntry[]> = {};
+    const grouped: Record<string, { logs: LogEntry[]; label: string }> = {};
     const today = new Date().toDateString();
     const yesterdayDate = new Date();
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
@@ -43,21 +52,24 @@ export default function HistoryScreen() {
     const reversedLogs = [...logs].reverse();
 
     reversedLogs.forEach(l => {
-      const d = new Date(l.timestamp).toDateString();
+      const logDate = new Date(l.timestamp);
+      const dateKey = logDate.toISOString().slice(0, 10); // yyyy-mm-dd
+      const d = logDate.toDateString();
       const label = d === today
         ? 'Today'
         : d === yesterday
           ? 'Yesterday'
-          : new Date(l.timestamp).toLocaleDateString('en-GB', {
+          : logDate.toLocaleDateString('en-GB', {
               weekday: 'long',
               day: 'numeric',
               month: 'short',
+              year: 'numeric',
             });
 
-      if (!grouped[label]) {
-        grouped[label] = [];
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = { logs: [], label };
       }
-      grouped[label].push(l);
+      grouped[dateKey].logs.push(l);
     });
 
     return grouped;
@@ -67,6 +79,23 @@ export default function HistoryScreen() {
     await editLog(id, updates);
     setEditingLog(null);
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centerAll]}>
+        <Text style={styles.emptyText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerAll]}>
+        <Text style={styles.emptyText}>Error loading history</Text>
+        <Text style={styles.emptyText}>{error}</Text>
+      </View>
+    );
+  }
 
   if (!logs.length) {
     return (
@@ -113,12 +142,12 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {Object.entries(groupedLogs).map(([day, entries]) => {
+        {Object.entries(groupedLogs).map(([dateKey, { logs: entries, label }]) => {
           const wCount = entries.filter((e: LogEntry) => e.type === 'win').length;
           const sCount = entries.filter((e: LogEntry) => e.type === 'sin').length;
           const total = wCount + sCount;
           const pct = total === 0 ? 0 : Math.round((wCount / total) * 100);
-          const isOpen = expandedDays[day] ?? false;
+          const isOpen = expandedDays[dateKey] ?? false;
 
           const filtered = entries.filter((e: LogEntry) =>
             filter === 'all'
@@ -129,14 +158,14 @@ export default function HistoryScreen() {
           );
 
           return (
-            <View key={day} style={styles.dayGroup}>
+            <View key={dateKey} style={styles.dayGroup}>
               <TouchableOpacity
-                onPress={() => toggleDay(day)}
+                onPress={() => toggleDay(dateKey)}
                 style={styles.dayHeader}
                 activeOpacity={0.7}
               >
                 <View style={styles.dayHeaderLeft}>
-                  <Text style={styles.dayLabel}>{day}</Text>
+                  <Text style={styles.dayLabel}>{label}</Text>
                   <Text style={styles.dayCounts}>
                     {wCount}W · {sCount}A
                   </Text>

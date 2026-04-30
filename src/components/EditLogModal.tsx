@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Radius, Spacing, Sizes, BorderWidths, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
 import { BrainIcon } from './icons/BrainIcon';
 import { ChipIcon } from './icons/ChipIcon';
@@ -51,7 +51,7 @@ export const EditLogModal = ({
   const activeColor = isWin ? Colors.primary : Colors.amber;
   const lightColor = isWin ? Colors.primaryLight : Colors.amberLight;
 
-  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories];
+  const allCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...customCategories]));
 
   const handleSave = async (): Promise<void> => {
     setIsSaving(true);
@@ -98,7 +98,7 @@ export const EditLogModal = ({
             <Card style={styles.readOnlyCard}>
               <View style={styles.readOnlyTop}>
                 <View style={[styles.iconCircle, { backgroundColor: isWin ? Colors.primary : Colors.sinIconBg }]}>
-                  {isWin ? <BrainIcon size={16} color="white" /> : <ChipIcon size={16} color={Colors.sinIconColor} />}
+                  {isWin ? <BrainIcon size={Sizes.iconSm} color={Colors.white} /> : <ChipIcon size={Sizes.iconSm} color={Colors.sinIconColor} />}
                 </View>
                 <Text style={[styles.readOnlyLabel, { color: isWin ? Colors.primary : Colors.sinLabelText }]}>
                   {isWin ? 'Win' : 'AI use'}
@@ -201,38 +201,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appBg,
     borderTopLeftRadius: Radius.xxl,
     borderTopRightRadius: Radius.xxl,
-    borderTopWidth: 4,
+    borderTopWidth: Spacing.xs,
     maxHeight: '90%',
   },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 48, // Extra padding for bottom
+    padding: Spacing.xxl,
+    paddingBottom: Spacing.xxxl, // Extra padding for bottom
   },
   title: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 22,
+    fontSize: Radius.xxl,
     color: Colors.textPrimary,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   subtitle: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.base,
     color: Colors.textMuted,
     lineHeight: 19.5,
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   readOnlyCard: {
-    padding: 12,
-    marginBottom: 24,
+    padding: Spacing.md,
+    marginBottom: Spacing.xxl,
   },
   readOnlyTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   iconCircle: {
-    width: 24,
-    height: 24,
+    width: Spacing.xxl,
+    height: Spacing.xxl,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -245,32 +245,32 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textHint,
-    marginTop: 4,
+    marginTop: Spacing.xs,
     marginLeft: 32, // align with text, account for 24px icon + 8px gap
   },
   sectionTitle: {
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   categoryWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 24,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xxl,
   },
   contextRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: Spacing.md,
+    marginBottom: Spacing.xxl,
   },
   contextButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
     alignItems: 'center',
     borderRadius: Radius.lg,
-    borderWidth: 1.5,
+    borderWidth: BorderWidths.md,
     borderColor: Colors.border,
     backgroundColor: Colors.cardBg,
   },
@@ -281,10 +281,10 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: Colors.cardBg,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderRadius: Radius.lg,
-    padding: 16,
-    paddingTop: 16, // needed for multiline iOS
+    padding: Spacing.lg,
+    paddingTop: Spacing.lg, // needed for multiline iOS
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
@@ -294,11 +294,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.md,
   },
   cancelButton: {
     flex: 1,
-    height: 52,
+    height: Sizes.buttonHeight,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.lg,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    height: 52,
+    height: Sizes.buttonHeight,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.lg,
