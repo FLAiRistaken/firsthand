@@ -57,8 +57,15 @@ export const FontSizes = {
   stat: 26,
 }
 
+export const LineHeights = {
+  goal: 22,
+}
+
 export const Spacing = {
+  xxs: 2,
   xs: 4,
+  xsSm: 6,
+  smMd: 7,
   sm: 8,
   smLg: 10,
   md: 12,
@@ -67,12 +74,18 @@ export const Spacing = {
   xxl: 24,
   xxxl: 48,
   screen: 22,
+  avatar: 72,
+  profilePaddingBottom: 40,
 }
 
 export const Sizes = {
   buttonHeight: 52,
   iconSm: 18,
 }
+
+export const ICON_SIZE_DEFAULT = 24
+export const ICON_COLOR_DEFAULT = 'currentColor'
+export const ICON_STROKE_WIDTH = '2'
 
 export const BorderWidths = {
   sm: 1,

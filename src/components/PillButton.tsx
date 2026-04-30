@@ -12,7 +12,7 @@ export interface PillButtonProps {
   variant?: Variant;
 }
 
-export const PillButton = ({
+export const PillButton = React.memo(({
   label,
   selected,
   onPress,
@@ -68,7 +68,7 @@ export const PillButton = ({
       </Pressable>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   animatedContainer: {

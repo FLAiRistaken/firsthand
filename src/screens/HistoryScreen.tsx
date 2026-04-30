@@ -120,10 +120,8 @@ export default function HistoryScreen() {
             <View style={styles.brandDot} />
             <Text style={styles.brandText}>Firsthand</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => {}}>
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
             <PersonIcon size={16} color={Colors.primary} />
-          </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
@@ -132,7 +130,6 @@ export default function HistoryScreen() {
           <View style={styles.filterRow}>
             {(['all', 'wins', 'AI uses'] as FilterType[]).map(f => (
               <PillButton
-                /* @ts-ignore */
                 key={f}
                 label={f}
                 selected={filter === f}
