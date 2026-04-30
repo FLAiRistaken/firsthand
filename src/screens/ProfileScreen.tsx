@@ -8,19 +8,16 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, LineHeights, DEFAULT_CATEGORIES } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, DEFAULT_CATEGORIES } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { Card } from '../components/Card';
 import { PillButton } from '../components/PillButton';
 import { PersonIcon } from '../components/icons/PersonIcon';
-import { CloseIcon } from '../components/icons/CloseIcon';
 
 export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
   const { signOut } = useAuth();
-  const insets = useSafeAreaInsets();
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -34,7 +31,7 @@ export default function ProfileScreen() {
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
 
-  const handleAddCategory = async (): Promise<void> => {
+  const handleAddCategory = async () => {
     const normalised = newCategoryInput.trim().toLowerCase();
     if (!normalised) return;
     if (normalised.length > 30) {
@@ -58,7 +55,7 @@ export default function ProfileScreen() {
 
   // Layout placeholder
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
       {/* Header section */}
       <View style={styles.headerSection}>
@@ -78,9 +75,7 @@ export default function ProfileScreen() {
                 setEditingName(false);
               }}
               onBlur={() => {
-                if (nameDraft.trim() !== profile?.name) {
-                  updateProfile({ name: nameDraft.trim() });
-                }
+                updateProfile({ name: nameDraft.trim() });
                 setEditingName(false);
               }}
             />
@@ -106,9 +101,7 @@ export default function ProfileScreen() {
                 setEditingOccupation(false);
               }}
               onBlur={() => {
-                if (occupationDraft.trim() !== profile?.occupation) {
-                  updateProfile({ occupation: occupationDraft.trim() });
-                }
+                updateProfile({ occupation: occupationDraft.trim() });
                 setEditingOccupation(false);
               }}
             />
@@ -167,6 +160,7 @@ export default function ProfileScreen() {
         <View style={styles.toolsRow}>
           {profile?.ai_tools_used?.map((tool: string) => (
             <PillButton
+              /* @ts-ignore */
               key={tool}
               variant="primary"
               selected={true}
@@ -190,6 +184,7 @@ export default function ProfileScreen() {
         <View style={styles.defaultCategoriesRow}>
           {DEFAULT_CATEGORIES.map((cat) => (
             <PillButton
+              /* @ts-ignore */
               key={cat}
               variant="primary"
               selected={true}
@@ -202,6 +197,7 @@ export default function ProfileScreen() {
         <View style={styles.customCategoriesRow}>
           {profile?.custom_categories?.map((cat: string) => (
             <PillButton
+              /* @ts-ignore */
               key={cat}
               variant="primary"
               selected={true}
@@ -248,7 +244,7 @@ export default function ProfileScreen() {
               setShowAddCategory(false);
               setNewCategoryInput('');
             }}>
-              <CloseIcon size={FontSizes.base} color={Colors.textMuted} />
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -298,20 +294,20 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: Spacing.screen,
-    paddingBottom: Spacing.profilePaddingBottom,
+    paddingBottom: 40,
   },
   headerSection: {
-    marginTop: Spacing.xxl,
-    marginBottom: Spacing.xxl,
+    marginTop: 24,
+    marginBottom: 24,
   },
   avatarCircle: {
-    width: Spacing.avatar,
-    height: Spacing.avatar,
+    width: 72,
+    height: 72,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: 16,
     borderRadius: Radius.full,
   },
   nameDisplay: {
@@ -331,7 +327,7 @@ const styles = StyleSheet.create({
   },
   occupationDisplay: {
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 4,
   },
   occupationInput: {
     fontFamily: Fonts.sans,
@@ -346,22 +342,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionCard: {
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
+    padding: 16,
+    marginBottom: 16,
   },
   sectionLabel: {
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     letterSpacing: 0.08,
-    marginBottom: Spacing.md,
+    marginBottom: 12,
   },
   subsection: {},
   subsectionLabel: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textHint,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   goalInput: {
     backgroundColor: Colors.appBg,
@@ -377,41 +373,41 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
-    lineHeight: LineHeights.goal,
+    lineHeight: 22,
   },
   divider: {
-    height: BorderWidths.sm,
+    height: 1,
     backgroundColor: Colors.border,
-    marginVertical: Spacing.md,
+    marginVertical: 12,
   },
   captionText: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
-    marginTop: Spacing.xsSm,
+    marginTop: 6,
   },
   toolsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.smMd,
+    gap: 7,
   },
   categoriesDesc: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textMuted,
-    marginBottom: Spacing.md,
+    marginBottom: 12,
   },
   defaultCategoriesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.smMd,
-    marginBottom: Spacing.sm,
+    gap: 7,
+    marginBottom: 8,
   },
   customCategoriesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.smMd,
-    marginBottom: Spacing.md,
+    gap: 7,
+    marginBottom: 12,
   },
   addCategoryRow: {
     flexDirection: 'row',
@@ -443,6 +439,10 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: Spacing.sm,
   },
+  closeButtonText: {
+    fontSize: FontSizes.base,
+    color: Colors.textMuted,
+  },
   newCategoryButton: {
     borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   signOutButton: {
-    paddingVertical: Spacing.md,
+    paddingVertical: 12,
     paddingHorizontal: 0,
   },
   signOutText: {
@@ -468,8 +468,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xxl,
+    marginTop: 8,
+    marginBottom: 24,
   },
   footerText: {
     fontFamily: Fonts.sans,
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
-    marginTop: Spacing.xxs,
+    marginTop: 2,
   },
 
 

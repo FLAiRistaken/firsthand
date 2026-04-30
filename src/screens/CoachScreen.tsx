@@ -112,8 +112,7 @@ export default function CoachScreen() {
           goal: sanitizePromptValue(profile?.goal ?? ''),
           success_definition: sanitizePromptValue(profile?.success_definition ?? ''),
         }),
-        120,
-        'claude-haiku-4-5'
+        120
       );
       setMessages([
         ...updated,
@@ -165,8 +164,10 @@ export default function CoachScreen() {
             <View style={styles.headerDot} />
             <Text style={styles.headerTitle}>Firsthand</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => {}}>
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <PersonIcon size={16} color={Colors.primary} />
+          </TouchableOpacity>
           </TouchableOpacity>
         </View>
 

@@ -12,8 +12,7 @@ interface AnthropicResponse {
 export async function callClaude(
   messages: { role: 'user' | 'assistant'; content: string }[],
   system: string,
-  maxTokens: number = 150,
-  model: string = 'claude-sonnet-4-5'
+  maxTokens: number = 150
 ): Promise<string> {
   const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
 
@@ -33,7 +32,7 @@ export async function callClaude(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model,
+        model: 'claude-sonnet-4-5',
         max_tokens: maxTokens,
         system,
         messages,
