@@ -14,7 +14,7 @@ export interface ProfileContextValue {
 
 const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
 
-export function ProfileProvider({ userId, children }: { userId: string | null; children: React.ReactNode }) {
+export function ProfileProvider({ userId, children }: { userId: string | null; children?: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isCreatingAccount, setIsCreatingAccount] = useState<boolean>(false);

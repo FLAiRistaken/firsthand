@@ -93,7 +93,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔲 Phase 6 — Profile Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 6.1 | Profile screen | 🔲 Pending | Name, occupation, custom categories management, view onboarding answers, sign out |
+| 6.1 | Profile screen | ✅ Done | Name, occupation, custom categories management, view onboarding answers, sign out |
 
 ---
 
@@ -176,6 +176,7 @@ Do not build any of the following until explicitly added to the build plan:
 
 | # | Prompt | Outcome |
 |---|---|---|
+| 12 | Profile screen + AppNavigator stack | ✅ Merged |
 | 01 | Theme constants + font loading | ✅ Merged — Copilot fixed font key strings, `Category` type with `string & {}` |
 | 02 | Supabase client + types + DB schema + helpers | ✅ Merged — Copilot fixed `.maybeSingle()`, `updateLog` userId param, removed `Database = any` |
 | 03 | Navigation shell + tab bar + screen placeholders | ✅ Merged — Copilot fixed unused imports + `onAuthStateChange` subscription |

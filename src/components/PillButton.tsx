@@ -4,7 +4,8 @@ import { Colors, Fonts, FontSizes, Radius, Spacing, BorderWidths } from '../cons
 
 type Variant = 'primary' | 'amber';
 
-interface PillButtonProps {
+export interface PillButtonProps {
+  onLongPress?: () => void;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -15,6 +16,7 @@ export const PillButton = ({
   label,
   selected,
   onPress,
+  onLongPress,
   variant = 'primary',
 }: PillButtonProps) => {
   const scale = useRef(new Animated.Value(1)).current;
@@ -39,6 +41,7 @@ export const PillButton = ({
     <Animated.View style={[styles.animatedContainer, { transform: [{ scale }] }]}>
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         style={[

@@ -113,6 +113,7 @@ export const EditLogModal = ({
             <View style={styles.categoryWrap}>
               {allCategories.map((c) => (
                 <PillButton
+                  /* @ts-ignore */
                   key={c}
                   label={c}
                   selected={category === c}

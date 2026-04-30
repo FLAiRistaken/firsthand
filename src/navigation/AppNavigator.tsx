@@ -1,9 +1,16 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import ProfileScreen from '../screens/ProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import CoachScreen from '../screens/CoachScreen';
 import { TabBar } from '../components/TabBar';
+
+export type AppStackParamList = {
+  Tabs: undefined;
+  Profile: undefined;
+};
 
 export type AppTabParamList = {
   Home: undefined;
@@ -12,8 +19,9 @@ export type AppTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
+const Stack = createNativeStackNavigator<AppStackParamList>();
 
-export function AppNavigator() {
+function TabNavigator() {
   return (
     <Tab.Navigator
       tabBar={(props) => <TabBar {...props} />}
@@ -25,5 +33,27 @@ export function AppNavigator() {
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Coach" component={CoachScreen} />
     </Tab.Navigator>
+  );
+}
+
+export function AppNavigator() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Tabs"
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: true,
+          title: 'Profile',
+          headerBackTitle: 'Done',
+        }}
+      />
+    </Stack.Navigator>
   );
 }

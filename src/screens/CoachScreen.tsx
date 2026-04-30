@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../navigation/AppNavigator';
+
 import {
   View,
   Text,
@@ -31,6 +35,7 @@ const COACH_PROMPTS = [
 const MAX_MESSAGES = 20;
 
 export default function CoachScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { profile } = useProfile();
   const insets = useSafeAreaInsets();
 
@@ -160,7 +165,9 @@ export default function CoachScreen() {
             <Text style={styles.headerTitle}>Firsthand</Text>
           </View>
           <TouchableOpacity style={styles.profileButton} onPress={() => {}}>
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <PersonIcon size={16} color={Colors.primary} />
+          </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
