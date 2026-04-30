@@ -31,8 +31,8 @@ export default function HomeScreen() {
 
   const [modalType, setModalType] = useState<'win' | 'sin' | null>(null);
   const [showTodayLogs, setShowTodayLogs] = useState<boolean>(false);
-  const [undoTarget, setUndoTarget] = useState<LogEntry | null>(null);
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [undoTargets, setUndoTargets] = useState<Map<string, LogEntry>>(new Map());
+  const undoTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const hour = new Date().getHours();
   const greetingTime = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
@@ -52,34 +52,47 @@ export default function HomeScreen() {
 
   useEffect(() => {
     return () => {
-      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      // Clear all timers on unmount
+      undoTimersRef.current.forEach(timer => clearTimeout(timer));
+      undoTimersRef.current.clear();
     };
   }, []);
 
   const showUndoToast = (entry: LogEntry) => {
-    if (undoTimerRef.current) {
-      clearTimeout(undoTimerRef.current);
-    }
+    // Add entry to the undo collection
+    setUndoTargets(prev => new Map(prev).set(entry.id, entry));
 
-    setUndoTarget(entry);
-
-    undoTimerRef.current = setTimeout(() => {
-      setUndoTarget(null);
-      undoTimerRef.current = null;
+    // Create a timeout tied to this specific entry
+    const timer = setTimeout(() => {
+      // Remove only this entry after 30s
+      setUndoTargets(prev => {
+        const next = new Map(prev);
+        next.delete(entry.id);
+        return next;
+      });
+      undoTimersRef.current.delete(entry.id);
     }, 30000);
+
+    // Store the timer for this entry
+    undoTimersRef.current.set(entry.id, timer);
   };
 
-  const handleUndo = async () => {
-    if (!undoTarget) return;
-    const target = undoTarget;
+  const handleUndo = async (entryId: string) => {
+    const target = undoTargets.get(entryId);
+    if (!target) return;
 
     try {
       await deleteLog(target.id);
-      // Success: clear the undo UI
-      setUndoTarget(null);
-      if (undoTimerRef.current) {
-        clearTimeout(undoTimerRef.current);
-        undoTimerRef.current = null;
+      // Success: clear this specific entry from undo UI and cancel its timer
+      setUndoTargets(prev => {
+        const next = new Map(prev);
+        next.delete(entryId);
+        return next;
+      });
+      const timer = undoTimersRef.current.get(entryId);
+      if (timer) {
+        clearTimeout(timer);
+        undoTimersRef.current.delete(entryId);
       }
     } catch {
       // Failure: keep the undo target and timer intact so user can retry
@@ -290,22 +303,30 @@ export default function HomeScreen() {
         onAddCategory={handleAddCategory}
       />
 
-      {undoTarget && (
-        <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
-          <Card style={styles.undoCard}>
-            <View style={[styles.undoIconCircle, undoTarget.type === 'win' ? styles.undoIconCircleWin : styles.undoIconCircleSin]}>
-              {undoTarget.type === 'win' ? <BrainIcon size={12} color={Colors.white} /> : <ChipIcon size={12} color={Colors.textMuted} />}
-            </View>
-            <View style={styles.undoTextBlock}>
-              <Text style={styles.undoTitleText}>{undoTarget.category} logged</Text>
-              <Text style={styles.undoHintText}>Tap undo to remove it</Text>
-            </View>
-            <TouchableOpacity onPress={handleUndo} style={styles.undoButton}>
-              <Text style={styles.undoButtonText}>Undo</Text>
-            </TouchableOpacity>
-          </Card>
-        </View>
-      )}
+      {undoTargets.size > 0 && (() => {
+        // Show the most recent entry (last added to the Map)
+        const entries = Array.from(undoTargets.values());
+        const mostRecentEntry = entries[entries.length - 1];
+        return (
+          <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
+            <Card style={styles.undoCard}>
+              <View style={[styles.undoIconCircle, mostRecentEntry.type === 'win' ? styles.undoIconCircleWin : styles.undoIconCircleSin]}>
+                {mostRecentEntry.type === 'win' ? <BrainIcon size={12} color={Colors.white} /> : <ChipIcon size={12} color={Colors.textMuted} />}
+              </View>
+              <View style={styles.undoTextBlock}>
+                <Text style={styles.undoTitleText}>
+                  {mostRecentEntry.category} logged
+                  {undoTargets.size > 1 && ` (+${undoTargets.size - 1} more)`}
+                </Text>
+                <Text style={styles.undoHintText}>Tap undo to remove it</Text>
+              </View>
+              <TouchableOpacity onPress={() => handleUndo(mostRecentEntry.id)} style={styles.undoButton}>
+                <Text style={styles.undoButtonText}>Undo</Text>
+              </TouchableOpacity>
+            </Card>
+          </View>
+        );
+      })()}
     </View>
   );
 }

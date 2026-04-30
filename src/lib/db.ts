@@ -58,15 +58,11 @@ export const updateLog = async (
 // After 30 seconds, logs are permanent. No exceptions.
 // This performs a non-destructive soft-delete by marking the log as cancelled.
 export const setLogCancelled = async (id: string, userId: string): Promise<void> => {
-  const cutoffIso = new Date(Date.now() - 30000).toISOString();
-
   const { data, error } = await supabase
-    .from('logs')
-    .update({ cancelled: true })
-    .eq('id', id)
-    .eq('user_id', userId)
-    .gte('created_at', cutoffIso)
-    .select();
+    .rpc('cancel_log_if_recent', {
+      p_id: id,
+      p_user_id: userId
+    });
 
   if (error) {
     console.error('Error cancelling log:', error);
