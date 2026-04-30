@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AppStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useStats } from '../hooks/useStats';
@@ -17,12 +21,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function HomeScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
   const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
-    personalAvg, aboveAverage, streakDots
+    personalAvg, ratioDiff, aboveAverage, streakDots
   } = useStats(logs);
   const { profile, updateProfile, isLoading: profileLoading } = useProfile();
   const insets = useSafeAreaInsets();
@@ -108,7 +113,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }): Promise<void> => {
+  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context?: LogContext }): Promise<void> => {
     try {
       const newLog = await addLog(entry);
       showUndoToast(newLog);
@@ -157,6 +162,7 @@ export default function HomeScreen() {
   }
 
   return (
+    <ErrorBoundary screenName="Home">
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerLeft}>
@@ -164,7 +170,9 @@ export default function HomeScreen() {
           <Text style={styles.headerTitle}>Firsthand</Text>
         </View>
         <View style={styles.headerRight}>
-          <PersonIcon size={18} color={Colors.textSecondary} />
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <PersonIcon size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -223,7 +231,7 @@ export default function HomeScreen() {
               <View style={styles.ratioRow}>
                 <Text style={styles.ratioLabel}>Own work — 7 days</Text>
                 <View style={styles.ratioRight}>
-                  {personalAvg !== null && (
+                  {ratioDiff !== null && ratioDiff !== 0 && (
                     <View style={[
                       styles.ratioBadge,
                       aboveAverage ? styles.ratioBadgeAbove : styles.ratioBadgeBelow
@@ -232,7 +240,7 @@ export default function HomeScreen() {
                         styles.ratioBadgeText,
                         aboveAverage ? styles.ratioBadgeTextAbove : styles.ratioBadgeTextBelow
                       ]}>
-                        {aboveAverage ? '↑' : '↓'}{Math.abs(weekRatio - personalAvg)}% {aboveAverage ? 'above' : 'below'} avg
+                        {aboveAverage ? '↑' : '↓'}{Math.abs(ratioDiff)}% {aboveAverage ? 'above' : 'below'} avg
                       </Text>
                     </View>
                   )}
@@ -279,7 +287,7 @@ export default function HomeScreen() {
 
             {showTodayLogs && (
               <View style={styles.logsList}>
-                {[...todayLogs].reverse().map((log) => {
+                {todayLogs.map((log) => {
                   const isWin = log.type === 'win';
                   const timeStr = new Date(log.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                   return (
@@ -314,7 +322,7 @@ export default function HomeScreen() {
       {undoTargets.size > 0 && (() => {
         // Show the most recent entry (last added to the Map)
         const entries = Array.from(undoTargets.values());
-        const mostRecentEntry = entries[entries.length - 1];
+        const mostRecentEntry = entries[entries.length - 1] as LogEntry;
         return (
           <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
             <Card style={styles.undoCard}>
@@ -336,6 +344,7 @@ export default function HomeScreen() {
         );
       })()}
     </View>
+    </ErrorBoundary>
   );
 }
 

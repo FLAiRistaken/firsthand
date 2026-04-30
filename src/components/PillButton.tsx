@@ -1,20 +1,22 @@
-import React, { useRef } from 'react';
+import React, { useRef, memo } from 'react';
 import { Animated, Pressable, Text, StyleSheet } from 'react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing, BorderWidths } from '../constants/theme';
 
 type Variant = 'primary' | 'amber';
 
-interface PillButtonProps {
+export interface PillButtonProps {
+  onLongPress?: () => void;
   label: string;
   selected: boolean;
   onPress: () => void;
   variant?: Variant;
 }
 
-export const PillButton = ({
+const PillButtonComponent = ({
   label,
   selected,
   onPress,
+  onLongPress,
   variant = 'primary',
 }: PillButtonProps) => {
   const scale = useRef(new Animated.Value(1)).current;
@@ -39,6 +41,7 @@ export const PillButton = ({
     <Animated.View style={[styles.animatedContainer, { transform: [{ scale }] }]}>
       <Pressable
         onPress={onPress}
+        onLongPress={onLongPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         style={[
@@ -66,6 +69,8 @@ export const PillButton = ({
     </Animated.View>
   );
 };
+
+export const PillButton = memo(PillButtonComponent);
 
 const styles = StyleSheet.create({
   animatedContainer: {
