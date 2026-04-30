@@ -11,11 +11,12 @@ import {
   Animated,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { callClaude } from '../lib/anthropic';
-import { COACH_SYSTEM } from '../lib/prompts';
+import { COACH_SYSTEM, sanitizePromptValue } from '../lib/prompts';
 import { SendIcon } from '../components/icons/SendIcon';
 import { PersonIcon } from '../components/icons/PersonIcon';
 
@@ -30,13 +31,13 @@ const MAX_MESSAGES = 20;
 
 export default function CoachScreen() {
   const { profile } = useProfile();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
     { role: 'assistant', content: "What's on your mind about your AI use today?" }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -86,23 +87,24 @@ export default function CoachScreen() {
 
   async function send(textOverride?: string) {
     const content = (textOverride ?? input).trim();
-    if (!content || loading || messageCount >= MAX_MESSAGES) return;
-
     const userMsg = { role: 'user' as const, content };
+    const nextLength = messages.length + 1;
+
+    if (!content || loading || nextLength >= MAX_MESSAGES) return;
+
     const updated = [...messages, userMsg];
     setMessages(updated);
     setInput('');
-    setMessageCount((prev: number) => prev + 1);
     setLoading(true);
 
     try {
       const reply = await callClaude(
         updated,
         COACH_SYSTEM({
-          name: profile?.name ?? '',
-          occupation: profile?.occupation ?? '',
-          goal: profile?.goal ?? '',
-          success_definition: profile?.success_definition ?? '',
+          name: sanitizePromptValue(profile?.name ?? ''),
+          occupation: sanitizePromptValue(profile?.occupation ?? ''),
+          goal: sanitizePromptValue(profile?.goal ?? ''),
+          success_definition: sanitizePromptValue(profile?.success_definition ?? ''),
         }),
         120
       );
@@ -113,12 +115,14 @@ export default function CoachScreen() {
           content: reply || 'What made you reach for AI in that moment?'
         }
       ]);
-    } catch {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('callClaude error:', error);
       setMessages([
         ...updated,
         {
           role: 'assistant',
-          content: 'What made you reach for AI in that moment?'
+          content: `Error: ${msg}`
         }
       ]);
     } finally {
@@ -143,7 +147,7 @@ export default function CoachScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -228,7 +232,7 @@ export default function CoachScreen() {
 
         {/* Input Area */}
         <View style={styles.inputArea}>
-          {messageCount >= MAX_MESSAGES ? (
+          {messages.length >= MAX_MESSAGES ? (
             <Text style={styles.capMessage}>
               That's a lot for one session — come back tomorrow.
             </Text>
@@ -276,17 +280,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 22,
-    paddingVertical: 16,
+    paddingHorizontal: Spacing.screen,
+    paddingVertical: Spacing.lg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
   headerDot: {
-    width: 8,
-    height: 8,
+    width: Spacing.sm,
+    height: Spacing.sm,
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
   },
@@ -304,19 +308,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   identityBarContainer: {
-    paddingHorizontal: 22,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: Spacing.screen,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.smLg,
   },
   identityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: Spacing.md,
     paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingHorizontal: Spacing.lg - 2,
     backgroundColor: Colors.cardBg,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
   },
   avatar: {
@@ -334,7 +338,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
-    marginBottom: 1,
+    marginBottom: BorderWidths.sm,
   },
   identityDesc: {
     fontFamily: Fonts.sans,
@@ -359,12 +363,12 @@ const styles = StyleSheet.create({
   },
   messageList: {
     flex: 1,
-    paddingHorizontal: 22,
+    paddingHorizontal: Spacing.screen,
   },
   messageListContent: {
-    paddingTop: 4,
-    paddingBottom: 8,
-    gap: 10,
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.smLg,
   },
   messageWrapper: {
     flexDirection: 'column',
@@ -379,7 +383,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
     paddingLeft: 2,
   },
   bubble: {
@@ -388,51 +392,51 @@ const styles = StyleSheet.create({
   userBubble: {
     backgroundColor: Colors.primary,
     paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderBottomRightRadius: 4,
-    borderBottomLeftRadius: 18,
+    paddingHorizontal: Spacing.lg,
+    borderTopLeftRadius: Radius.xl - 2,
+    borderTopRightRadius: Radius.xl - 2,
+    borderBottomRightRadius: Spacing.xs,
+    borderBottomLeftRadius: Radius.xl - 2,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: Spacing.md,
     elevation: 4,
   },
   assistantBubble: {
     backgroundColor: Colors.cardBg,
     paddingVertical: 13,
-    paddingHorizontal: 16,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 18,
-    borderBottomRightRadius: 18,
-    borderBottomLeftRadius: 18,
-    borderWidth: 1,
+    paddingHorizontal: Spacing.lg,
+    borderTopLeftRadius: Spacing.xs,
+    borderTopRightRadius: Radius.xl - 2,
+    borderBottomRightRadius: Radius.xl - 2,
+    borderBottomLeftRadius: Radius.xl - 2,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
     shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: BorderWidths.sm },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: Spacing.xs,
     elevation: 1,
   },
   userBubbleText: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
-    lineHeight: 24,
+    lineHeight: FontSizes.xxl,
     color: Colors.white,
   },
   assistantBubbleText: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
-    lineHeight: 24,
+    lineHeight: FontSizes.xxl,
     color: Colors.textPrimary,
   },
   loadingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
     paddingVertical: 13,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.lg,
   },
   loadingDot: {
     width: 6,
@@ -441,23 +445,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textHint,
   },
   quickPromptsContainer: {
-    marginTop: 8,
+    marginTop: Spacing.sm,
   },
   quickPromptsLabel: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     paddingLeft: 2,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   quickPromptButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: Spacing.smLg,
+    paddingHorizontal: Spacing.lg - 2,
     borderRadius: Radius.md,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
     backgroundColor: Colors.cardBg,
     marginBottom: 6,
@@ -473,9 +477,9 @@ const styles = StyleSheet.create({
   },
   inputArea: {
     flexShrink: 0,
-    borderTopWidth: 1,
+    borderTopWidth: BorderWidths.sm,
     borderColor: Colors.border,
-    backgroundColor: 'rgba(247,246,243,0.98)',
+    backgroundColor: Colors.appBg,
   },
   capMessage: {
     padding: Spacing.lg,
@@ -488,18 +492,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    paddingTop: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingTop: Spacing.smLg,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg - 2,
   },
   inputWrapper: {
     flex: 1,
     backgroundColor: Colors.cardBg,
-    borderWidth: 1.5,
+    borderWidth: BorderWidths.md,
     borderColor: Colors.inputBorder,
     borderRadius: Radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.smLg,
+    paddingHorizontal: Spacing.lg,
   },
   textInput: {
     fontFamily: Fonts.sans,
@@ -518,7 +522,7 @@ const styles = StyleSheet.create({
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.27,
-    shadowRadius: 12,
+    shadowRadius: Spacing.md,
     elevation: 4,
   },
   sendButtonDisabled: {
