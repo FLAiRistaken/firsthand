@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, TextInput, Alert, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '../lib/googleSignIn';
@@ -33,6 +33,11 @@ export default function AuthScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
   const [googleConfigError, setGoogleConfigError] = useState<string | null>(null);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [emailLoading, setEmailLoading] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === 'ios' || Platform.OS === 'macos') {
@@ -80,6 +85,44 @@ export default function AuthScreen() {
       }
     } finally {
       setAppleLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) return;
+    if (trimmedPassword.length < 6) {
+      Alert.alert('Password too short', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      if (authMode === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: trimmedPassword,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password: trimmedPassword,
+        });
+        if (error) throw error;
+        Alert.alert(
+          'Check your email',
+          'We sent you a confirmation link. Click it to activate your account, then sign in.'
+        );
+        setAuthMode('signin');
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      Alert.alert('Sign in failed', message);
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -163,6 +206,62 @@ export default function AuthScreen() {
               </>
             )}
           </TouchableOpacity>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Requires: Supabase dashboard -> Authentication -> Providers -> Email -> Enable */}
+          <View style={styles.emailForm}>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email address"
+              placeholderTextColor={Colors.textHint}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.input}
+            />
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              placeholderTextColor={Colors.textHint}
+              secureTextEntry={true}
+              autoCapitalize="none"
+              style={styles.input}
+            />
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleEmailAuth}
+              disabled={emailLoading}
+              activeOpacity={0.8}
+            >
+              {emailLoading ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.primaryButtonText}>
+                  {authMode === 'signin' ? 'Sign in' : 'Create account'}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleTextMuted}>
+                {authMode === 'signin'
+                  ? "Don't have an account? "
+                  : "Already have an account? "}
+              </Text>
+              <TouchableOpacity onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}>
+                <Text style={styles.toggleTextAction}>
+                  {authMode === 'signin' ? 'Create one' : 'Sign in'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         <Text style={styles.finePrint}>
@@ -265,5 +364,64 @@ const styles = StyleSheet.create({
     color: Colors.textHint,
     textAlign: 'center',
     marginTop: 16,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 20,
+  },
+  dividerLine: {
+    height: 1,
+    flex: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textHint,
+  },
+  emailForm: {
+    width: '100%',
+    gap: 12,
+  },
+  input: {
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1.5,
+    borderColor: Colors.inputBorder,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.md,
+    color: Colors.textPrimary,
+  },
+  primaryButton: {
+    width: '100%',
+    padding: 16,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.white,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  toggleTextMuted: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+  },
+  toggleTextAction: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.sm,
+    color: Colors.primary,
   },
 });

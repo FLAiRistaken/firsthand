@@ -45,6 +45,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 1.6 | Business logic hooks | ✅ Done | useAuth, useLogs (offline queue + AppState listener), useStats (DST-safe), useProfile |
 | 1.7 | Dev auth bypass | ✅ Done | `src/lib/devConfig.ts` — `DEV_BYPASS_AUTH = __DEV__ && true` |
 | 1.8 | Google Sign In stub | ✅ Done | `src/lib/googleSignIn.ts` — for Expo Go compatibility |
+| 1.9 | Email/password auth | ✅ Done | Added to AuthScreen for dev testing and as production fallback |
 
 ---
 
@@ -179,6 +180,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
 | 07b | DEV_BYPASS_AUTH | ✅ Merged via Antigravity — `__DEV__ && true` pattern |
 | 07c | Google Sign In stub | ✅ Merged via Antigravity — Expo Go compatibility |
+| 07d | Email/password auth | ✅ Merged |
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
