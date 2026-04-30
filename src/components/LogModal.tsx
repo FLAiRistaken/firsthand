@@ -13,6 +13,7 @@ import {
 import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
 import type { LogContext } from '../lib/types';
+import { useProfile } from '../hooks/useProfile';
 
 interface LogModalProps {
   visible: boolean;
@@ -31,9 +32,13 @@ export const LogModal = ({
   customCategories,
   onAddCategory
 }: LogModalProps) => {
+  const { profile } = useProfile();
+
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [note, setNote] = useState<string>('');
-  const [selectedContext, setSelectedContext] = useState<LogContext | undefined>();
+  const [selectedContext, setSelectedContext] = useState<LogContext | undefined>(
+    profile?.default_context ?? undefined
+  );
   const [addingCategory, setAddingCategory] = useState<boolean>(false);
   const [newCategoryInput, setNewCategoryInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -41,7 +46,7 @@ export const LogModal = ({
   const resetState = () => {
     setSelectedCategory('');
     setNote('');
-    setSelectedContext(undefined);
+    setSelectedContext(profile?.default_context ?? undefined);
     setAddingCategory(false);
     setNewCategoryInput('');
   };
@@ -78,7 +83,7 @@ export const LogModal = ({
       // Reset state
       setSelectedCategory('');
       setNote('');
-      setSelectedContext(undefined);
+      setSelectedContext(profile?.default_context ?? undefined);
       setAddingCategory(false);
       setNewCategoryInput('');
     } catch (err: unknown) {

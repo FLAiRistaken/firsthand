@@ -25,6 +25,7 @@ export interface UserProfile {
   custom_categories: string[];
   created_at: string;
   onboarded: boolean;
+  default_context?: 'work' | 'personal' | null;
 }
 
 export interface AppState {
