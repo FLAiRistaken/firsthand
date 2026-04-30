@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -48,7 +49,7 @@ export function AppNavigator() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          presentation: 'modal',
+          presentation: Platform.OS === 'ios' ? 'modal' : 'card',
           headerShown: true,
           title: 'Profile',
           headerBackTitle: 'Done',
