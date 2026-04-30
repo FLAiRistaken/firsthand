@@ -120,13 +120,22 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 
 | File / Area | Issue | Fix |
 |---|---|---|
-| `src/screens/AuthScreen.tsx` | Apple Sign In gated on `Platform.OS === 'ios'` only | Change to `Platform.OS === 'ios' \|\| Platform.OS === 'macos'` |
-| `src/screens/AuthScreen.tsx` | Google env var check throws at render time, crashing the screen if vars are missing | Defer the throw to `handleGoogleSignIn` so the screen renders even without real Google credentials |
-| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | ✅ Removed |
-| `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real import of `@react-native-google-signin/google-signin` once a development build is configured |
-| `.env.local` | Google client IDs are placeholders | Replace with real OAuth credentials when Google Sign In is configured |
 | `BUILD_PLAN.md` (Decisions Log) | Said model is Haiku, but code is Sonnet after Copilot's revert | Code is `claude-sonnet-4-5`. Decisions Log updated below. |
 | `OnboardingScreen / ProfileContext` | Brief onboarding flicker during account creation — onAuthStateChange fires before setProfile completes | Add `isCreatingAccount` flag to ProfileContext to suppress routing during account creation |
+| `src/screens/AuthScreen.tsx` | Apple Sign In gate | ✅ Fixed — `'ios' \|\| 'macos'` |
+| `src/screens/AuthScreen.tsx` | Google env var crash on render | ✅ Fixed — deferred to button press |
+| `src/lib/devConfig.ts` | DEV_BYPASS_AUTH active | ✅ Fully removed |
+| `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real `@react-native-google-signin/google-signin` once EAS dev build configured |
+| `.env.local` | Google client IDs are placeholders | Replace once Google Sign In configured |
+| `src/lib/anthropic.ts` | Sonnet model string | ✅ Fixed — `claude-sonnet-4-6` |
+| `src/screens/CoachScreen.tsx` | Haiku model string | ✅ Fixed — `claude-haiku-4-5-20251001` |
+| `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | Remove dead filter — Phase 7.12 |
+| `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | Rename to `deleteLog` for clarity — minor refactor |
+| `src/screens/CoachScreen.tsx` | Auto-scroll doesn't reach bottom of last message | Investigate `scrollToEnd` timing — Phase 7 polish |
+| `src/screens/CoachScreen.tsx` | API error shows fake fallback question | Show honest error message — Phase 7.10 |
+| `src/components/LogModal.tsx` (and EditLogModal) | Note `maxLength` not enforced | Add `maxLength={200}` and counter — Phase 7.9 |
+| Profile screen | Custom categories list grows unbounded in UI | Soft cap 20 visible — Phase 7.13 |
+| ProfileContext | `isCreatingAccount` flag wired up correctly? | Audit during Phase 7 — set in `try`, cleared in `finally`, checked in RootNavigator |
 
 ---
 
@@ -201,6 +210,17 @@ Do not build any of the following until explicitly added to the build plan:
 | 09c | Undo expiry error propagation | ✅ Merged |
 | 14 | Fix stale session routing bug | ✅ Merged |
 | 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
+| 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
+
+### Hotfixes via Antigravity (smaller, surgical changes)
+- RLS DELETE policy added to logs table (resolved silent 204 undo bug)
+- `EXPO_PUBLIC_SUPABASE_URL` had `/rest/v1` appended — fixed
+- `addLog` race condition fixed (removed `fetchLogs()` after success)
+- Offline queue `pendingDeleteTimestamps` ref to prevent undone-log re-insertion
+- ProfileContext silent sign-out removed (was incorrectly signing out new users)
+- `isCreatingAccount` flag added to ProfileContext
+- **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
+
 ---
 
 ## Notes for Future Sessions
