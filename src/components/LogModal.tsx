@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Radius, Spacing, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
 import type { LogContext } from '../lib/types';
 import { useProfile } from '../hooks/useProfile';
@@ -222,9 +222,9 @@ export const LogModal = ({
               </View>
             </View>
 
-            <View style={{ marginBottom: 18 }}>
+            <View style={styles.noteWrapper}>
               <TextInput
-                style={[styles.noteInput, { marginBottom: 0 }]}
+                style={styles.noteInput}
                 placeholder="Quick note… (optional)"
                 placeholderTextColor={Colors.textHint}
                 value={note}
@@ -234,13 +234,10 @@ export const LogModal = ({
               />
               {note.length >= 180 && (
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans,
-                    fontSize: FontSizes.xs,
-                    color: note.length >= 200 ? Colors.amber : Colors.textHint,
-                    textAlign: 'right',
-                    marginTop: 4,
-                  }}
+                  style={[
+                    styles.noteCounter,
+                    { color: note.length >= 200 ? Colors.amber : Colors.textHint },
+                  ]}
                 >
                   {note.length}/200
                 </Text>
@@ -390,9 +387,17 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.base,
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
-    marginBottom: 18,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  noteWrapper: {
+    marginBottom: 18,
+  },
+  noteCounter: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    textAlign: 'right',
+    marginTop: Spacing.xs,
   },
   actionRow: {
     flexDirection: 'row',

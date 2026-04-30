@@ -23,6 +23,7 @@ import { TargetIcon } from '../components/icons/TargetIcon';
 import { ChipIcon } from '../components/icons/ChipIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { GearIcon } from '../components/icons/GearIcon';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
@@ -75,6 +76,7 @@ export default function ProfileScreen() {
   };
 
   return (
+    <ErrorBoundary screenName="Profile">
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
@@ -404,6 +406,7 @@ export default function ProfileScreen() {
 
       </ScrollView>
     </KeyboardAvoidingView>
+    </ErrorBoundary>
   );
 }
 

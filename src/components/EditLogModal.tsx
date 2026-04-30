@@ -160,9 +160,9 @@ export const EditLogModal = ({
             </View>
 
             <Text style={styles.sectionTitle}>Note (optional)</Text>
-            <View style={{ marginBottom: 32 }}>
+            <View style={styles.noteWrapper}>
               <TextInput
-                style={[styles.input, { borderColor: Colors.inputBorder, marginBottom: 0 }]}
+                style={[styles.input, { borderColor: Colors.inputBorder }]}
                 value={note}
                 onChangeText={setNote}
                 placeholder="What happened?"
@@ -172,13 +172,10 @@ export const EditLogModal = ({
               />
               {note.length >= 180 && (
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans,
-                    fontSize: FontSizes.xs,
-                    color: note.length >= 200 ? Colors.amber : Colors.textHint,
-                    textAlign: 'right',
-                    marginTop: 4,
-                  }}
+                  style={[
+                    styles.noteCounter,
+                    { color: note.length >= 200 ? Colors.amber : Colors.textHint },
+                  ]}
                 >
                   {note.length}/200
                 </Text>
@@ -226,7 +223,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: Radius.xxl,
+    fontSize: FontSizes.xxl,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
@@ -262,7 +259,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     marginTop: Spacing.xs,
-    marginLeft: 32, // align with text, account for 24px icon + 8px gap
+    marginLeft: Spacing.xxl, // align with text, account for icon + gap
   },
   sectionTitle: {
     fontFamily: Fonts.sansMedium,
@@ -306,7 +303,15 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     minHeight: 100,
     textAlignVertical: 'top',
-    marginBottom: 32,
+  },
+  noteWrapper: {
+    marginBottom: Spacing.xxxl,
+  },
+  noteCounter: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    textAlign: 'right',
+    marginTop: Spacing.xs,
   },
   footer: {
     flexDirection: 'row',

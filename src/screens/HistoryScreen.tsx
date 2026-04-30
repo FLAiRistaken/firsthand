@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 17,
+    fontSize: FontSizes.lg,
     color: Colors.textPrimary,
   },
   dayCounts: {
@@ -470,9 +470,9 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
   },
   entryContext: {
-    fontSize: 10,
-    paddingVertical: 1,
-    paddingHorizontal: 7,
+    fontSize: FontSizes.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
     borderRadius: Radius.sm,
     fontFamily: Fonts.sansMedium,
     overflow: 'hidden',
