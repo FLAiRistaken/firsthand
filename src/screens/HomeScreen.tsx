@@ -25,7 +25,7 @@ export default function HomeScreen() {
     todayLogs, todayWins, todaySins, streak, weekRatio,
     personalAvg, aboveAverage, streakDots
   } = useStats(logs);
-  const { profile, updateProfile, isLoading: profileLoading } = useProfile(userId);
+  const { profile, updateProfile, isLoading: profileLoading } = useProfile();
   const insets = useSafeAreaInsets();
 
   const isLoading = logsLoading || profileLoading;

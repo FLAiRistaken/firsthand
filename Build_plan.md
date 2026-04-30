@@ -190,6 +190,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
 | 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
+| 13 | ProfileContext — shared profile state | ✅ Merged |
 
 | 09 | Home screen + LogModal component | ✅ Merged |
 ---

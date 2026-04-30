@@ -54,7 +54,7 @@ const TypingIndicator = () => {
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { userId } = useAuth();
-  const { updateProfile } = useProfile(userId);
+  const { updateProfile } = useProfile();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

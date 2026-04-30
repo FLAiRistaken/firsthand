@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Session } from '@supabase/supabase-js';
 import { AppNavigator } from './AppNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AuthScreen from '../screens/AuthScreen';
-import { getProfile } from '../lib/db';
 import { Colors } from '../constants/theme';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
+import { ProfileProvider, useProfileContext } from '../contexts/ProfileContext';
+
 export type RootStackParamList = {
   Auth: undefined;
   App: undefined;
@@ -16,57 +17,15 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export function RootNavigator() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isOnboarded, setIsOnboarded] = useState(false);
+function RootNavigatorContent({ session, isLoading: authLoading }: { session: Session | null, isLoading: boolean }) {
+  const { profile, isLoading: profileLoading } = useProfileContext();
 
-  const checkOnboardingStatus = async (providedSession?: Session | null) => {
-    try {
-      let activeSession = providedSession;
-      if (activeSession === undefined) {
-        const {
-          data: { session: fetchedSession },
-        } = await supabase.auth.getSession();
-        activeSession = fetchedSession;
-      }
+  const isScreenLoading = authLoading || (!!session && profileLoading);
 
-      setSession(activeSession);
-
-      if (!activeSession?.user?.id) {
-        setIsOnboarded(false);
-        return;
-      }
-
-      const profile = await getProfile(activeSession.user.id);
-      setIsOnboarded(!!profile?.onboarded);
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      setIsOnboarded(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkOnboardingStatus();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, listenerSession) => {
-      setIsLoading(true);
-      checkOnboardingStatus(listenerSession);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (isLoading) {
+  if (isScreenLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <View style={styles.loadingDot} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -75,12 +34,22 @@ export function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!session ? (
         <Stack.Screen name="Auth" component={AuthScreen} />
-      ) : isOnboarded ? (
+      ) : profile?.onboarded ? (
         <Stack.Screen name="App" component={AppNavigator} />
       ) : (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       )}
     </Stack.Navigator>
+  );
+}
+
+export function RootNavigator() {
+  const { session, isLoading } = useAuth();
+
+  return (
+    <ProfileProvider userId={session?.user?.id ?? null}>
+      <RootNavigatorContent session={session} isLoading={isLoading} />
+    </ProfileProvider>
   );
 }
 
@@ -90,11 +59,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appBg,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  loadingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
   },
 });
