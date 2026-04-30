@@ -19,15 +19,15 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isCreatingAccount, setIsCreatingAccount] = useState<boolean>(false);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (silent = false) => {
     if (!userId) {
       setProfile(null);
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const data = await getProfile(userId);
       setProfile(data);
     } catch (err: unknown) {
@@ -37,7 +37,7 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
         console.error('Failed to fetch profile:', String(err));
       }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [userId]);
 
@@ -72,7 +72,7 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
       });
       await upsertProfile({ ...updates, id: userId });
       // Confirm from server — critical for RootNavigator to see onboarded: true
-      await fetchProfile();
+      await fetchProfile(true);
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error('Failed to update profile:', err.message);
