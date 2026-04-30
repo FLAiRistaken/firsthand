@@ -176,8 +176,12 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
 
     try {
       const insertedLog = await insertLog(insertPayload);
-      // Wait for insert then refresh to get real ID
-      await fetchLogs();
+      // Replace optimistic entry with server-confirmed entry
+      setLogs((prev: LogEntry[]) => prev.map(l =>
+        l.id === tempId ? insertedLog : l
+      ).sort((a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      ));
       return insertedLog;
     } catch (err) {
       if (isNetworkError(err)) {
