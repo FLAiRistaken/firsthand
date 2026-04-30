@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useStats } from '../hooks/useStats';
