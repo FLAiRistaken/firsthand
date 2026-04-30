@@ -11,6 +11,7 @@ export interface LogEntry {
   context?: LogContext;
   duration_mins?: number;
   created_at: string;
+  cancelled?: boolean;
 }
 
 export interface UserProfile {

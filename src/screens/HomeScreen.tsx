@@ -293,7 +293,7 @@ export default function HomeScreen() {
         <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
           <Card style={styles.undoCard}>
             <View style={[styles.undoIconCircle, undoTarget.type === 'win' ? styles.undoIconCircleWin : styles.undoIconCircleSin]}>
-              {undoTarget.type === 'win' ? <BrainIcon size={12} color={Colors.white} /> : <ChipIcon size={12} color="#AAA" />}
+              {undoTarget.type === 'win' ? <BrainIcon size={12} color={Colors.white} /> : <ChipIcon size={12} color={Colors.textMuted} />}
             </View>
             <View style={styles.undoTextBlock}>
               <Text style={styles.undoTitleText}>{undoTarget.category} logged</Text>
@@ -680,16 +680,16 @@ const styles = StyleSheet.create({
 
   undoToastWrapper: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: Spacing.lg,
+    right: Spacing.lg,
     zIndex: 100,
   },
   undoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
     borderRadius: Radius.lg,
     backgroundColor: Colors.cardBg,
     borderColor: Colors.border,
@@ -701,8 +701,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   undoIconCircle: {
-    width: 28,
-    height: 28,
+    width: Spacing.xxl + 4,
+    height: Spacing.xxl + 4,
     borderRadius: Radius.full,
     flexShrink: 0,
     justifyContent: 'center',
@@ -712,11 +712,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   undoIconCircleSin: {
-    backgroundColor: '#DDD5C8',
+    backgroundColor: Colors.sinIconBg,
   },
   undoTextBlock: {
     flex: 1,
-    marginTop: 2,
+    marginTop: Spacing.xs / 2,
   },
   undoTitleText: {
     fontFamily: Fonts.sansMedium,
@@ -729,8 +729,8 @@ const styles = StyleSheet.create({
     color: Colors.textHint,
   },
   undoButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.md,
     borderRadius: Radius.md,
     backgroundColor: Colors.primaryLight,
   },

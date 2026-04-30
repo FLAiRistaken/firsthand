@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
-import { getLogs, insertLog, updateLog, deleteLog as dbDeleteLog } from '../lib/db';
+import { getLogs, insertLog, updateLog, setLogCancelled as dbSetLogCancelled } from '../lib/db';
 
 const OFFLINE_QUEUE_KEY = 'firsthand_offline_queue';
 
@@ -213,11 +213,11 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     setLogs((prev: LogEntry[]) => prev.filter(l => l.id !== id));
 
     try {
-      await dbDeleteLog(id, userId);
+      await dbSetLogCancelled(id, userId);
     } catch {
       // Revert — re-fetch to restore correct state
       fetchLogs();
-      throw new Error('Failed to delete log');
+      throw new Error('Failed to cancel log');
     }
   };
 
