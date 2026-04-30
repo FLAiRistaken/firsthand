@@ -23,14 +23,14 @@ interface LogModalProps {
   onAddCategory: (category: string) => void;
 }
 
-export const LogModal: React.FC<LogModalProps> = ({
+export const LogModal = ({
   visible,
   type,
   onSave,
   onClose,
   customCategories,
-  onAddCategory,
-}) => {
+  onAddCategory
+}: LogModalProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [selectedContext, setSelectedContext] = useState<LogContext | undefined>();

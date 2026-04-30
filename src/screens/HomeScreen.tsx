@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
@@ -9,10 +9,9 @@ import { PersonIcon } from '../components/icons/PersonIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { ChipIcon } from '../components/icons/ChipIcon';
 import { Card } from '../components/Card';
-import { Toast } from '../components/Toast';
 import { LogModal } from '../components/LogModal';
 import Svg, { Polyline } from 'react-native-svg';
-import { LogContext } from '../lib/types';
+import { LogContext, LogEntry } from '../lib/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -20,7 +19,7 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function HomeScreen() {
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
-  const { logs, addLog, isLoading: logsLoading } = useLogs(userId);
+  const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
     personalAvg, aboveAverage, streakDots
@@ -32,8 +31,8 @@ export default function HomeScreen() {
 
   const [modalType, setModalType] = useState<'win' | 'sin' | null>(null);
   const [showTodayLogs, setShowTodayLogs] = useState<boolean>(false);
-  const [toastVisible, setToastVisible] = useState<boolean>(false);
-  const [toastType, setToastType] = useState<'win' | 'sin'>('win');
+  const [undoTargets, setUndoTargets] = useState<Map<string, LogEntry>>(new Map());
+  const undoTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const hour = new Date().getHours();
   const greetingTime = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : 'Evening';
@@ -50,11 +49,65 @@ export default function HomeScreen() {
     subtitle = 'Balanced day so far.';
   }
 
+
+  useEffect(() => {
+    return () => {
+      // Clear all timers on unmount
+      undoTimersRef.current.forEach(timer => clearTimeout(timer));
+      undoTimersRef.current.clear();
+    };
+  }, []);
+
+  const showUndoToast = (entry: LogEntry) => {
+    // Add entry to the undo collection
+    setUndoTargets(prev => new Map(prev).set(entry.id, entry));
+
+    // Create a timeout tied to this specific entry
+    const timer = setTimeout(() => {
+      // Remove only this entry after 30s
+      setUndoTargets(prev => {
+        const next = new Map(prev);
+        next.delete(entry.id);
+        return next;
+      });
+      undoTimersRef.current.delete(entry.id);
+    }, 30000);
+
+    // Store the timer for this entry
+    undoTimersRef.current.set(entry.id, timer);
+  };
+
+  const handleUndo = async (entryId: string) => {
+    const target = undoTargets.get(entryId);
+    if (!target) return;
+
+    try {
+      await deleteLog(target.id);
+      // Success: clear this specific entry from undo UI and cancel its timer
+      setUndoTargets(prev => {
+        const next = new Map(prev);
+        next.delete(entryId);
+        return next;
+      });
+      const timer = undoTimersRef.current.get(entryId);
+      if (timer) {
+        clearTimeout(timer);
+        undoTimersRef.current.delete(entryId);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && (err as any).code === 'EXPIRED') {
+        Alert.alert('Too late to undo', 'Logs can only be undone within 30 seconds.');
+      } else {
+        // Failure: keep the undo target and timer intact so user can retry
+        Alert.alert('Could not undo', 'The log could not be removed. Try again.');
+      }
+    }
+  };
+
   const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => {
     try {
-      await addLog(entry);
-      setToastType(entry.type);
-      setToastVisible(true);
+      const newLog = await addLog(entry);
+      showUndoToast(newLog);
       setModalType(null);
     } catch (e) {
       console.error(e);
@@ -254,11 +307,30 @@ export default function HomeScreen() {
         onAddCategory={handleAddCategory}
       />
 
-      <Toast
-        visible={toastVisible}
-        type={toastType}
-        onHide={() => setToastVisible(false)}
-      />
+      {undoTargets.size > 0 && (() => {
+        // Show the most recent entry (last added to the Map)
+        const entries = Array.from(undoTargets.values());
+        const mostRecentEntry = entries[entries.length - 1];
+        return (
+          <View style={[styles.undoToastWrapper, { top: insets.top + 12 }]}>
+            <Card style={styles.undoCard}>
+              <View style={[styles.undoIconCircle, mostRecentEntry.type === 'win' ? styles.undoIconCircleWin : styles.undoIconCircleSin]}>
+                {mostRecentEntry.type === 'win' ? <BrainIcon size={12} color={Colors.white} /> : <ChipIcon size={12} color={Colors.textMuted} />}
+              </View>
+              <View style={styles.undoTextBlock}>
+                <Text style={styles.undoTitleText}>
+                  {mostRecentEntry.category} logged
+                  {undoTargets.size > 1 && ` (+${undoTargets.size - 1} more)`}
+                </Text>
+                <Text style={styles.undoHintText}>Tap undo to remove it</Text>
+              </View>
+              <TouchableOpacity onPress={() => handleUndo(mostRecentEntry.id)} style={styles.undoButton}>
+                <Text style={styles.undoButtonText}>Undo</Text>
+              </TouchableOpacity>
+            </Card>
+          </View>
+        );
+      })()}
     </View>
   );
 }
@@ -630,5 +702,67 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: Spacing.screen,
+  },
+
+  undoToastWrapper: {
+    position: 'absolute',
+    left: Spacing.lg,
+    right: Spacing.lg,
+    zIndex: 100,
+  },
+  undoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.cardBg,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  undoIconCircle: {
+    width: Spacing.xxl + 4,
+    height: Spacing.xxl + 4,
+    borderRadius: Radius.full,
+    flexShrink: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  undoIconCircleWin: {
+    backgroundColor: Colors.primary,
+  },
+  undoIconCircleSin: {
+    backgroundColor: Colors.sinIconBg,
+  },
+  undoTextBlock: {
+    flex: 1,
+    marginTop: Spacing.xs / 2,
+  },
+  undoTitleText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+  },
+  undoHintText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textHint,
+  },
+  undoButton: {
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryLight,
+  },
+  undoButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.sm,
+    color: Colors.primary,
   },
 });

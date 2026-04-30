@@ -13,7 +13,8 @@ export const getLogs = async (userId: string): Promise<LogEntry[]> => {
     throw error;
   }
 
-  return data as LogEntry[];
+  // Filter out cancelled logs (soft-deleted records)
+  return (data as LogEntry[]).filter(log => !log.cancelled);
 };
 
 export const insertLog = async (log: Omit<LogEntry, 'id' | 'created_at'>): Promise<LogEntry> => {
@@ -50,6 +51,27 @@ export const updateLog = async (
   }
 
   return data as LogEntry;
+};
+
+// setLogCancelled — called ONLY from the 30-second undo window in HomeScreen.
+// No other code path should ever call this function.
+// After 30 seconds, logs are permanent. No exceptions.
+// This performs a non-destructive soft-delete by marking the log as cancelled.
+export const setLogCancelled = async (id: string, userId: string): Promise<void> => {
+  const { data, error } = await supabase
+    .rpc('cancel_log_if_recent', {
+      p_id: id,
+      p_user_id: userId
+    });
+
+  if (error) {
+    console.error('Error cancelling log:', error);
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('Undo window expired. Logs can only be cancelled within 30 seconds of creation.');
+  }
 };
 
 export const getProfile = async (userId: string): Promise<UserProfile | null> => {

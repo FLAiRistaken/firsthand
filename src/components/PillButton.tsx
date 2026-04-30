@@ -11,12 +11,12 @@ interface PillButtonProps {
   variant?: Variant;
 }
 
-export const PillButton: React.FC<PillButtonProps> = ({
+export const PillButton = ({
   label,
   selected,
   onPress,
   variant = 'primary',
-}) => {
+}: PillButtonProps) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
