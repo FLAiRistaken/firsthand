@@ -6,6 +6,7 @@ import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes } from '
 import { callClaude } from '../lib/anthropic';
 import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUserProfile } from '../lib/prompts';
 import { upsertProfile } from '../lib/db';
+import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { SendIcon } from '../components/icons/SendIcon';
 import { supabase } from '../lib/supabase';
@@ -57,7 +58,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { userId } = useAuth();
-
+  const { refreshProfile } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -138,17 +139,26 @@ export default function OnboardingScreen() {
         }
       }
 
-      // Wait briefly for session to propagate
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 2: Wait for onAuthStateChange to fire and session to be available
+      // Poll getSession with retries instead of a fixed wait
+      let session = null;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user?.id) {
+          session = data.session;
+          break;
+        }
+      }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) throw new Error('Account created but session not found.');
+      if (!session?.user?.id) {
+        throw new Error('Session not established after account creation.');
+      }
 
       const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
       const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
-      // Call upsertProfile directly with confirmed userId — bypasses context
-      // timing issue where auth headers haven't propagated yet
+      // Step 3: Write profile directly with confirmed userId
       await upsertProfile({
         id: session.user.id,
         name: profileRef.current.name,
@@ -161,7 +171,9 @@ export default function OnboardingScreen() {
         onboarded: true,
       });
 
-      // RootNavigator transitions to App automatically via ProfileContext
+      // Step 4: Force ProfileContext to re-fetch so RootNavigator
+      // sees onboarded: true and transitions to App
+      await refreshProfile();
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
