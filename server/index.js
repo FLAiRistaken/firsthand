@@ -55,6 +55,10 @@ app.post('/api/chat', (req, res) => {
     ...(system ? { system } : {}),
   };
 
+  const controller = new AbortController();
+  const timeoutMs = process.env.ANTHROPIC_TIMEOUT_MS || 10000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -63,8 +67,10 @@ app.post('/api/chat', (req, res) => {
       'x-api-key': ANTHROPIC_API_KEY,
     },
     body: JSON.stringify(body),
+    signal: controller.signal,
   })
     .then(async (anthropicRes) => {
+      clearTimeout(timeoutId);
       const data = await anthropicRes.json();
       if (!anthropicRes.ok) {
         return res.status(anthropicRes.status).json(data);
@@ -72,7 +78,11 @@ app.post('/api/chat', (req, res) => {
       return res.json(data);
     })
     .catch((err) => {
+      clearTimeout(timeoutId);
       console.error('Anthropic fetch error:', err);
+      if (err.name === 'AbortError') {
+        return res.status(504).json({ error: 'Gateway timeout - Anthropic API did not respond in time' });
+      }
       return res.status(502).json({ error: 'Failed to reach Anthropic API' });
     });
 });
