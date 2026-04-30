@@ -75,9 +75,9 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔲 Phase 4 — History Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 4.1 | History screen layout | 🔲 Pending | Grouped by day, collapsible day headers, mini ratio bar per day |
-| 4.2 | Filter pills | 🔲 Pending | All / Wins / AI uses |
-| 4.3 | Log entry edit | 🔲 Pending | Edit note, category, context only — no type change, no delete |
+| 4.1 | History screen layout | ✅ Done | Grouped by day, collapsible day headers, mini ratio bar per day |
+| 4.2 | Filter pills | ✅ Done | All / Wins / AI uses |
+| 4.3 | Log entry edit | ✅ Done | Edit note, category, context only — no type change, no delete |
 
 ---
 
@@ -190,7 +190,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 07f | AuthScreen design fix + missing theme tokens | ✅ Merged |
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
-| 10 | History screen | 🔲 Pending — prompt ready in handoff document |
+| 10 | History screen | ✅ Merged |
 | 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
 | 13 | ProfileContext — shared profile state | ✅ Merged |
