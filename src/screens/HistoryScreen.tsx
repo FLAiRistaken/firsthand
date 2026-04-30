@@ -54,9 +54,7 @@ export default function HistoryScreen() {
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
     const yesterday = yesterdayDate.toDateString();
 
-    const reversedLogs = [...logs].reverse();
-
-    reversedLogs.forEach(l => {
+    logs.forEach(l => {
       const logDate = new Date(l.timestamp);
       const dateKey = logDate.toISOString().slice(0, 10); // yyyy-mm-dd
       const d = logDate.toDateString();
