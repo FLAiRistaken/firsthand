@@ -1,21 +1,25 @@
-name: Verify Coach Screen
+name: Typecheck
 
 on:
   push:
-    paths:
-      - 'src/screens/CoachScreen.tsx'
-      - 'Build_plan.md'
+    branches: ['**']
+  pull_request:
+    branches: ['**']
 
 jobs:
-  verify:
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.22.1
+          node-version: '22'
+          cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
+
       - name: Run TypeScript compiler
         run: npx tsc --noEmit

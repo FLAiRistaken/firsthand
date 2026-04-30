@@ -214,6 +214,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
 | 17 | Model string updates (Sonnet 4.6, Haiku dated) | ✅ Merged |
 | 18 | Error boundaries — all main screens | ✅ Merged |
+| 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)
