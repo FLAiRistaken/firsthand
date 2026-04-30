@@ -147,8 +147,16 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.greenDot} />
@@ -212,17 +220,8 @@ export default function AuthScreen() {
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
-
           {/* Requires: Supabase dashboard -> Authentication -> Providers -> Email -> Enable */}
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={64}
-            style={{ width: '100%' }}
-          >
-            <ScrollView
-              contentContainerStyle={styles.emailForm}
-              keyboardShouldPersistTaps="handled"
-            >
+          <View style={styles.emailForm}>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -269,15 +268,15 @@ export default function AuthScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
+          </View>
         </View>
 
         <Text style={styles.finePrint}>
           By continuing you agree to our Terms and Privacy Policy
         </Text>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -285,8 +284,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.appBg,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
+    paddingVertical: Spacing.xxl,
   },
   content: {
     alignItems: 'center',
@@ -301,15 +304,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greenDot: {
-    width: 8,
-    height: 8,
+    width: 10,
+    height: 10,
     borderRadius: Radius.full,
     backgroundColor: Colors.primary,
     marginRight: 8,
   },
   wordmark: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 22,
+    fontSize: FontSizes.xl,
     color: Colors.textPrimary,
   },
   tagline: {
@@ -372,13 +375,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     textAlign: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xl,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    marginVertical: Spacing.xl,
+    marginVertical: Spacing.md,
   },
   dividerLine: {
     height: BorderWidths.sm,
@@ -396,21 +399,27 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: Colors.cardBg,
-    borderWidth: BorderWidths.md,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.inputBorder,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: 14,
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
   },
   primaryButton: {
     width: '100%',
-    padding: Spacing.lg,
-    borderRadius: Radius.pill,
+    height: Sizes.buttonHeight,
+    justifyContent: 'center',
+    borderRadius: Radius.lg,
     backgroundColor: Colors.primary,
     alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   primaryButtonText: {
     fontFamily: Fonts.sansMedium,
@@ -421,7 +430,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   toggleTextMuted: {
     fontFamily: Fonts.sans,
