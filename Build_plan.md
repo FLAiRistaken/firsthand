@@ -118,7 +118,7 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 |---|---|---|
 | `src/screens/AuthScreen.tsx` | Apple Sign In gated on `Platform.OS === 'ios'` only | Change to `Platform.OS === 'ios' \|\| Platform.OS === 'macos'` |
 | `src/screens/AuthScreen.tsx` | Google env var check throws at render time, crashing the screen if vars are missing | Defer the throw to `handleGoogleSignIn` so the screen renders even without real Google credentials |
-| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | Remove all "DEV ONLY" code paths before any production or TestFlight build |
+| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | ✅ Removed |
 | `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real import of `@react-native-google-signin/google-signin` once a development build is configured |
 | `.env.local` | Google client IDs are placeholders | Replace with real OAuth credentials when Google Sign In is configured |
 | `BUILD_PLAN.md` (Decisions Log) | Said model is Haiku, but code is Sonnet after Copilot's revert | Code is `claude-sonnet-4-5`. Decisions Log updated below. |
@@ -180,7 +180,11 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
 | 07b | DEV_BYPASS_AUTH | ✅ Merged via Antigravity — `__DEV__ && true` pattern |
 | 07c | Google Sign In stub | ✅ Merged via Antigravity — Expo Go compatibility |
+<<<<<<< Updated upstream
 | 07d | Email/password auth | ✅ Merged |
+=======
+| 07e | Remove DEV_BYPASS_AUTH | ✅ Merged |
+>>>>>>> Stashed changes
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
