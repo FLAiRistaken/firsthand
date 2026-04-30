@@ -13,6 +13,7 @@ import { PersonIcon } from '../components/icons/PersonIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { ChipIcon } from '../components/icons/ChipIcon';
 import { EditLogModal } from '../components/EditLogModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 import type { LogEntry } from '../lib/types';
 import Svg, { Path } from 'react-native-svg';
@@ -111,7 +112,7 @@ export default function HistoryScreen() {
   }
 
   return (
-
+    <ErrorBoundary screenName="History">
       <View style={styles.container}>
       {/* Fixed Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -288,7 +289,7 @@ export default function HistoryScreen() {
         customCategories={profile?.custom_categories ?? []}
       />
     </View>
-
+    </ErrorBoundary>
   );
 }
 

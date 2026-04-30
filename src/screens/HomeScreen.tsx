@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -161,6 +162,7 @@ export default function HomeScreen() {
   }
 
   return (
+    <ErrorBoundary screenName="Home">
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerLeft}>
@@ -342,6 +344,7 @@ export default function HomeScreen() {
         );
       })()}
     </View>
+    </ErrorBoundary>
   );
 }
 

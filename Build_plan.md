@@ -101,7 +101,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | # | Task | Status | Notes |
 |---|---|---|---|
 | 7.1 | Empty states | 🔲 Pending | All screens need explicit empty states |
-| 7.2 | Error boundaries | 🔲 Pending | All screens |
+| 7.2 | Error boundaries | ✅ Done | All main screens (Home, History, Coach, Onboarding) wrapped |
 | 7.3 | Loading states | 🔲 Pending | All data-driven components |
 | 7.4 | Anthropic API backend proxy | 🔲 Pending | Move API calls server-side — host on Railway |
 | 7.5 | App icon + splash screen | 🔲 Pending | Firsthand green dot identity |
@@ -211,6 +211,8 @@ Do not build any of the following until explicitly added to the build plan:
 | 14 | Fix stale session routing bug | ✅ Merged |
 | 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
 | 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
+| 17 | Model string updates (Sonnet 4.6, Haiku dated) | ✅ Merged |
+| 18 | Error boundaries — all main screens | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)

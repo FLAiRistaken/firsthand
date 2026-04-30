@@ -23,6 +23,7 @@ import { callClaude } from '../lib/anthropic';
 import { COACH_SYSTEM, sanitizePromptValue } from '../lib/prompts';
 import { SendIcon } from '../components/icons/SendIcon';
 import { PersonIcon } from '../components/icons/PersonIcon';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { ArrowIcon } from '../components/icons/ArrowIcon';
 
 const COACH_PROMPTS = [
@@ -154,6 +155,7 @@ export default function CoachScreen() {
   };
 
   return (
+    <ErrorBoundary screenName="Coach">
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
@@ -272,6 +274,7 @@ export default function CoachScreen() {
         </View>
       </KeyboardAvoidingView>
     </View>
+    </ErrorBoundary>
   );
 }
 
