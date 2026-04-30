@@ -54,8 +54,8 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔄 Phase 2 — Onboarding (in flight)
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 2.1 | Onboarding screen | ✅ Done | AI-powered, 6 questions, Anthropic API |
-| 2.2 | Profile creation on complete | 🔲 Pending | Write profile to Supabase on ONBOARDING_COMPLETE |
+| 2.1 | Onboarding screen | ✅ Done | Includes sign-in link on Q1, account creation final step |
+| 2.2 | Profile creation on complete | ✅ Done | Written after signUp at end of onboarding |
 
 ---
 
@@ -200,6 +200,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 09b | Undo window + deleteLog | ✅ Merged |
 | 09c | Undo expiry error propagation | ✅ Merged |
 | 14 | Fix stale session routing bug | ✅ Merged |
+| 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
 ---
 
 ## Notes for Future Sessions

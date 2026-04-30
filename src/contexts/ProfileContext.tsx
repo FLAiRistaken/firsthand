@@ -26,11 +26,6 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
     try {
       setIsLoading(true);
       const data = await getProfile(userId);
-      if (!data) {
-        // Session exists but user has no profile — stale or deleted account
-        // Sign out silently to clear cached session
-        await supabase.auth.signOut().catch(() => {});
-      }
       setProfile(data);
     } catch (err) {
       console.error('Failed to fetch profile:', err);

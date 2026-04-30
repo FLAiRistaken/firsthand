@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, KeyboardAvoidingView, Platform, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, KeyboardAvoidingView, Platform, FlatList, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes } from '../constants/theme';
 import { callClaude } from '../lib/anthropic';
 import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUserProfile } from '../lib/prompts';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { SendIcon } from '../components/icons/SendIcon';
+import { supabase } from '../lib/supabase';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -53,6 +55,7 @@ const TypingIndicator = () => {
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const { userId } = useAuth();
   const { updateProfile } = useProfile();
 
@@ -62,9 +65,15 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
 
+  const [showAccountCreation, setShowAccountCreation] = useState(false);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [accountLoading, setAccountLoading] = useState(false);
+
   const profileRef = useRef<CoachUserProfile & { raw_tools?: string; raw_uses?: string }>({ name: '' });
   const flatListRef = useRef<FlatList>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const initConversation = async () => {
@@ -88,6 +97,65 @@ export default function OnboardingScreen() {
       useNativeDriver: false,
     }).start();
   }, [step]);
+
+  useEffect(() => {
+    if (showAccountCreation) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [showAccountCreation]);
+
+  const handleCreateAccount = async () => {
+    const trimmedEmail = accountEmail.trim();
+    if (!trimmedEmail || !accountPassword) return;
+    if (accountPassword.length < 6) {
+      Alert.alert('Password too short', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    setAccountLoading(true);
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password: accountPassword,
+      });
+      if (signUpError) throw signUpError;
+
+      // Wait briefly for session to propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) throw new Error('Account created but session not found.');
+
+      const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
+      const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
+
+      // Write all collected onboarding answers + onboarded: true
+      await updateProfile({
+        name: profileRef.current.name,
+        occupation: profileRef.current.occupation || '',
+        ai_tools_used: tools,
+        primary_uses: uses,
+        goal: profileRef.current.goal || '',
+        success_definition: profileRef.current.success_definition || '',
+        onboarded: true,
+      });
+
+      // RootNavigator transitions to App automatically via ProfileContext
+
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Something went wrong.';
+      Alert.alert('Account creation failed', message);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || loading || done) return;
@@ -117,26 +185,9 @@ export default function OnboardingScreen() {
       if (isComplete) {
         setDone(true);
         setStep(6);
-        const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
-        const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
-
-        const updates = {
-          name: profileRef.current.name,
-          occupation: profileRef.current.occupation || '',
-          goal: profileRef.current.goal || '',
-          success_definition: profileRef.current.success_definition || '',
-          ai_tools_used: tools,
-          primary_uses: uses,
-          onboarded: true,
-        };
-
-        setTimeout(async () => {
-          try {
-            await updateProfile(updates);
-          } catch (error) {
-            console.error('Failed to update profile:', error);
-          }
-        }, 2200);
+        setTimeout(() => {
+          setShowAccountCreation(true);
+        }, 500);
       } else {
         setStep((s: number) => s + 1);
       }
@@ -161,15 +212,75 @@ export default function OnboardingScreen() {
     );
   };
 
+  const renderAccountCreation = () => {
+    if (!showAccountCreation) return null;
+
+    return (
+      <Animated.View style={{ opacity: fadeAnim }}>
+        <View style={styles.divider} />
+        <Text style={styles.accountHeading}>One last step.</Text>
+        <Text style={styles.accountSubtext}>Create your account to save your progress.</Text>
+
+        <TextInput
+          value={accountEmail}
+          onChangeText={setAccountEmail}
+          placeholder="Email address"
+          placeholderTextColor={Colors.textHint}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.accountInput}
+        />
+
+        <TextInput
+          value={accountPassword}
+          onChangeText={setAccountPassword}
+          placeholder="Password (min. 6 characters)"
+          placeholderTextColor={Colors.textHint}
+          secureTextEntry={true}
+          autoCapitalize="none"
+          style={[styles.accountInput, { marginTop: Spacing.md }]}
+        />
+
+        <TouchableOpacity
+          style={styles.accountButton}
+          onPress={handleCreateAccount}
+          disabled={accountLoading}
+          activeOpacity={0.8}
+        >
+          {accountLoading ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.accountButtonText}>Create account</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.loginRow}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Auth')}>
+            <Text style={styles.loginLink}>Sign in</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
-        <View style={styles.wordmarkContainer}>
-          <View style={styles.greenDot} />
-          <Text style={styles.wordmark}>Firsthand</Text>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <View style={[styles.wordmarkContainer, { marginBottom: 0 }]}>
+            <View style={styles.greenDot} />
+            <Text style={styles.wordmark}>Firsthand</Text>
+          </View>
+          {step === 0 && (
+            <TouchableOpacity onPress={() => navigation.navigate('Auth')} style={{ padding: Spacing.sm }}>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.base, color: Colors.textMuted }}>Sign in</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.progressTrack}>
           <Animated.View
@@ -200,7 +311,12 @@ export default function OnboardingScreen() {
         contentContainerStyle={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        ListFooterComponent={loading ? <TypingIndicator /> : null}
+        ListFooterComponent={
+          <View>
+            {loading && <TypingIndicator />}
+            {renderAccountCreation()}
+          </View>
+        }
       />
 
       {!done && (
@@ -242,7 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appBg,
   },
   header: {
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.screen,
     paddingBottom: 16,
     flexShrink: 0,
   },
@@ -407,5 +523,67 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.streakEmpty,
     shadowOpacity: 0,
     elevation: 0,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.xl,
+  },
+  accountHeading: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: FontSizes.xl,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
+  accountSubtext: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.md,
+    color: Colors.textMuted,
+    marginBottom: Spacing.xl,
+  },
+  accountInput: {
+    backgroundColor: Colors.cardBg,
+    borderWidth: BorderWidths.sm,
+    borderColor: Colors.inputBorder,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 14,
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.md,
+    color: Colors.textPrimary,
+  },
+  accountButton: {
+    marginTop: Spacing.md,
+    height: Sizes.buttonHeight,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  accountButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.white,
+  },
+  loginRow: {
+    marginTop: Spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+  },
+  loginLink: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.sm,
+    color: Colors.primary,
   },
 });

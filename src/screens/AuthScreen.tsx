@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, TextInput, Alert, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, Sizes, BorderWidths } from '../constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin, type GoogleSignInResult } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
@@ -39,8 +40,8 @@ export default function AuthScreen() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [emailLoading, setEmailLoading] = useState(false);
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     if (Platform.OS === 'ios' || Platform.OS === 'macos') {
@@ -103,24 +104,11 @@ export default function AuthScreen() {
 
     setEmailLoading(true);
     try {
-      if (authMode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password: password,
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: trimmedEmail,
-          password: password,
-        });
-        if (error) throw error;
-        Alert.alert(
-          'Check your email',
-          'We sent you a confirmation link. Click it to activate your account, then sign in.'
-        );
-        setAuthMode('signin');
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: password,
+      });
+      if (error) throw error;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       Alert.alert('Sign in failed', message);
@@ -260,20 +248,18 @@ export default function AuthScreen() {
                   <ActivityIndicator color={Colors.white} />
                 ) : (
                   <Text style={styles.primaryButtonText}>
-                    {authMode === 'signin' ? 'Sign in' : 'Create account'}
+                    Sign in
                   </Text>
                 )}
               </TouchableOpacity>
 
               <View style={styles.toggleRow}>
                 <Text style={styles.toggleTextMuted}>
-                  {authMode === 'signin'
-                    ? "Don't have an account? "
-                    : "Already have an account? "}
+                  New here?{' '}
                 </Text>
-                <TouchableOpacity onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Onboarding')}>
                   <Text style={styles.toggleTextAction}>
-                    {authMode === 'signin' ? 'Create one' : 'Sign in'}
+                    Start onboarding
                   </Text>
                 </TouchableOpacity>
               </View>
