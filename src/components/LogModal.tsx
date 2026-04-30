@@ -135,8 +135,7 @@ export const LogModal = ({
               <View style={styles.categoryWrap}>
                 {allCategories.map((cat) => (
                   <PillButton
-                    /* @ts-ignore */
-                  key={cat}
+                    key={cat}
                     label={cat}
                     selected={selectedCategory === cat}
                     onPress={() => setSelectedCategory(cat)}

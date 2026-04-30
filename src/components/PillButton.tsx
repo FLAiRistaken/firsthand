@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, memo } from 'react';
 import { Animated, Pressable, Text, StyleSheet } from 'react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing, BorderWidths } from '../constants/theme';
 
@@ -12,7 +12,7 @@ export interface PillButtonProps {
   variant?: Variant;
 }
 
-export const PillButton = ({
+const PillButtonComponent = ({
   label,
   selected,
   onPress,
@@ -69,6 +69,8 @@ export const PillButton = ({
     </Animated.View>
   );
 };
+
+export const PillButton = memo(PillButtonComponent);
 
 const styles = StyleSheet.create({
   animatedContainer: {

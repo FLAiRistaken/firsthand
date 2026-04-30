@@ -164,10 +164,8 @@ export default function CoachScreen() {
             <View style={styles.headerDot} />
             <Text style={styles.headerTitle}>Firsthand</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={() => {}}>
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
             <PersonIcon size={16} color={Colors.primary} />
-          </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
