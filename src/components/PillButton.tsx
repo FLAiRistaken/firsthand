@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Animated, Pressable, Text, StyleSheet } from 'react-native';
-import { Colors, Fonts, FontSizes, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Radius, Spacing, BorderWidths } from '../constants/theme';
 
 type Variant = 'primary' | 'amber';
 
@@ -11,12 +11,12 @@ interface PillButtonProps {
   variant?: Variant;
 }
 
-export const PillButton: React.FC<PillButtonProps> = ({
+export const PillButton = ({
   label,
   selected,
   onPress,
   variant = 'primary',
-}) => {
+}: PillButtonProps) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -72,10 +72,10 @@ const styles = StyleSheet.create({
     // Wrapper for spring scale animation; layout driven by Pressable child
   },
   button: {
-    paddingVertical: 7,
-    paddingHorizontal: 15,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
     borderRadius: Radius.pill,
-    borderWidth: 1.5,
+    borderWidth: BorderWidths.md,
   },
   buttonUnselected: {
     borderColor: Colors.streakEmpty,

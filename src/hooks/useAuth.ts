@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { DEV_BYPASS_AUTH, DEV_USER } from '../lib/devConfig';
-
 export interface UseAuthReturn {
   session: Session | null;
   userId: string | null;
@@ -18,15 +16,6 @@ export const useAuth = (): UseAuthReturn => {
     let mounted = true;
 
     const getInitialSession = async () => {
-      // DEV ONLY — remove before production build
-      if (DEV_BYPASS_AUTH) {
-        if (mounted) {
-          setSession({ user: DEV_USER } as any);
-          setIsLoading(false);
-        }
-        return;
-      }
-
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {

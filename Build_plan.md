@@ -3,6 +3,8 @@
 > Tracks build order, completed tasks, and what's coming next.
 > Updated by Jules as part of each task. Do not edit manually outside that flow.
 
+| 3.7 | Undo window (30s) | ✅ Done | Hard delete within 30s window only, undo toast in HomeScreen |
+
 ---
 
 ## Orchestration Setup
@@ -45,26 +47,28 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 1.6 | Business logic hooks | ✅ Done | useAuth, useLogs (offline queue + AppState listener), useStats (DST-safe), useProfile |
 | 1.7 | Dev auth bypass | ✅ Done | `src/lib/devConfig.ts` — `DEV_BYPASS_AUTH = __DEV__ && true` |
 | 1.8 | Google Sign In stub | ✅ Done | `src/lib/googleSignIn.ts` — for Expo Go compatibility |
+| 1.9 | Email/password auth | ✅ Done | Added to AuthScreen for dev testing and as production fallback |
 
 ---
 
 ### 🔄 Phase 2 — Onboarding (in flight)
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 2.1 | Onboarding screen | 🔄 In Progress | Jules prompt 08 — AI-powered, 6 questions, Anthropic API |
-| 2.2 | Profile creation on complete | 🔄 In Progress | Bundled with 2.1 — writes profile via `updateProfile()` on `ONBOARDING_COMPLETE_TOKEN` |
+| 2.1 | Onboarding screen | ✅ Done | Includes sign-in link on Q1, account creation final step |
+| 2.2 | Profile creation on complete | ✅ Done | Written after signUp at end of onboarding |
 
 ---
 
 ### 🔄 Phase 3 — Home Screen (in flight)
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 3.1 | Home screen layout | 🔄 In Progress | Jules prompt 09 — Greeting, two buttons, stats, ratio card, streak dots |
-| 3.2 | Log modal | 🔄 In Progress | Bundled with 3.1 — `src/components/LogModal.tsx` bottom sheet |
-| 3.3 | Streak dots component | 🔄 In Progress | Inline in Home screen |
-| 3.4 | Ratio bar component | 🔄 In Progress | Inline in Home screen |
-| 3.5 | Today's log list | 🔄 In Progress | Inline, collapsible |
-| 3.6 | Offline queue | ✅ Done | Already implemented in useLogs |
+| 3.1 | Home screen layout | ✅ Done | Greeting, two buttons, stats row |
+| 3.2 | Log modal | ✅ Done | Bottom sheet — category, context, note |
+| 3.3 | Streak dots component | ✅ Done | 7-day visual |
+| 3.4 | Ratio bar component | ✅ Done | 7-day own work % with personal avg |
+| 3.5 | Today's log list | ✅ Done | Collapsible, reverse chronological |
+| 3.6 | Offline queue | ✅ Done | Implemented in useLogs — AsyncStorage queue, flushes on reconnect and app foreground |
+| 3.7 | Undo window (30s) | ✅ Done | Hard delete within 30s window only, undo toast in HomeScreen |
 
 ---
 
@@ -106,6 +110,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
 | 7.9 | TestFlight build | 🔲 Pending | First real device test |
 | 7.10 | App Store submission | 🔲 Pending | |
+| 7.11 | First-launch tutorial | 🔲 Pending | 4-step overlay after onboarding transition — highlights Home buttons, History, Coach. Shown once, stored in AsyncStorage |
 
 ---
 
@@ -117,10 +122,11 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 |---|---|---|
 | `src/screens/AuthScreen.tsx` | Apple Sign In gated on `Platform.OS === 'ios'` only | Change to `Platform.OS === 'ios' \|\| Platform.OS === 'macos'` |
 | `src/screens/AuthScreen.tsx` | Google env var check throws at render time, crashing the screen if vars are missing | Defer the throw to `handleGoogleSignIn` so the screen renders even without real Google credentials |
-| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | Remove all "DEV ONLY" code paths before any production or TestFlight build |
+| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | ✅ Removed |
 | `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real import of `@react-native-google-signin/google-signin` once a development build is configured |
 | `.env.local` | Google client IDs are placeholders | Replace with real OAuth credentials when Google Sign In is configured |
 | `BUILD_PLAN.md` (Decisions Log) | Said model is Haiku, but code is Sonnet after Copilot's revert | Code is `claude-sonnet-4-5`. Decisions Log updated below. |
+| `OnboardingScreen / ProfileContext` | Brief onboarding flicker during account creation — onAuthStateChange fires before setProfile completes | Add `isCreatingAccount` flag to ProfileContext to suppress routing during account creation |
 
 ---
 
@@ -179,12 +185,21 @@ Do not build any of the following until explicitly added to the build plan:
 | 07 | Business logic hooks | ✅ Merged — Copilot fixed DST-safe dates, `isNetworkError`, AppState listener, UUID fallback |
 | 07b | DEV_BYPASS_AUTH | ✅ Merged via Antigravity — `__DEV__ && true` pattern |
 | 07c | Google Sign In stub | ✅ Merged via Antigravity — Expo Go compatibility |
-| 08 | Onboarding screen | 🔄 In Progress |
-| 09 | Home screen + LogModal | 🔄 In Progress |
+| 07d | Email/password auth | ✅ Merged |
+| 07e | Remove DEV_BYPASS_AUTH | ✅ Merged |
+| 07f | AuthScreen design fix + missing theme tokens | ✅ Merged |
+| 08 | Onboarding screen | ✅ Merged |
+| 09 | Home screen + LogModal | ✅ Merged |
 | 10 | History screen | 🔲 Pending — prompt ready in handoff document |
 | 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
+| 13 | ProfileContext — shared profile state | ✅ Merged |
 
+| 09 | Home screen + LogModal component | ✅ Merged |
+| 09b | Undo window + deleteLog | ✅ Merged |
+| 09c | Undo expiry error propagation | ✅ Merged |
+| 14 | Fix stale session routing bug | ✅ Merged |
+| 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
 ---
 
 ## Notes for Future Sessions

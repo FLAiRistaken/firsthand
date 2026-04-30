@@ -3,11 +3,11 @@ import { View, ViewStyle, StyleSheet, StyleProp } from 'react-native';
 import { Colors, Radius } from '../constants/theme';
 
 interface CardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
-export const Card: React.FC<CardProps> = ({ children, style }) => {
+export const Card = ({ children, style }: CardProps) => {
   return (
     <View style={[styles.card, style]}>
       {children}

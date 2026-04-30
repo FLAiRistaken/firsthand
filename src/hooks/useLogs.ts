@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
-import { getLogs, insertLog, updateLog } from '../lib/db';
+import { getLogs, insertLog, updateLog, setLogCancelled as dbSetLogCancelled } from '../lib/db';
 
 const OFFLINE_QUEUE_KEY = 'firsthand_offline_queue';
 
@@ -32,8 +32,9 @@ export interface UseLogsReturn {
   logs: LogEntry[];
   isLoading: boolean;
   error: string | null;
-  addLog: (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }) => Promise<void>;
+  addLog: (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }) => Promise<LogEntry>;
   editLog: (id: string, updates: Partial<Pick<LogEntry, 'note' | 'category' | 'context' | 'duration_mins'>>) => Promise<void>;
+  deleteLog: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -87,8 +88,14 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
           successfullyInserted.push(insertedLog);
           newQueue.shift(); // Remove the item we just successfully inserted
         } catch (err) {
-          console.error('Failed to flush log, keeping in queue:', err);
-          break; // Stop trying if we hit an error (likely still offline)
+          if (isNetworkError(err)) {
+            console.error('Failed to flush log (network error), keeping in queue:', err);
+            break; // Stop trying if we hit a network error (likely still offline)
+          } else {
+            console.error('Terminal server error flushing log, discarding item:', err);
+            newQueue.shift(); // Remove poisoned item to avoid blocking queue
+            // continue loop
+          }
         }
       }
 
@@ -124,7 +131,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     };
   }, [userId, fetchLogs, flushOfflineQueue]);
 
-  const addLog = async (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }) => {
+  const addLog = async (entry: Omit<LogEntry, 'id' | 'created_at' | 'user_id' | 'timestamp'> & { timestamp?: string }): Promise<LogEntry> => {
     if (!userId) throw new Error('User not authenticated');
 
     // Create a temporary ID and timestamp for optimistic update
@@ -141,7 +148,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     };
 
     // Optimistically update UI
-    setLogs(prev => [optimisticLog, ...prev].sort((a, b) =>
+    setLogs((prev: LogEntry[]) => [optimisticLog, ...prev].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     ));
 
@@ -152,9 +159,10 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     };
 
     try {
-      await insertLog(insertPayload);
+      const insertedLog = await insertLog(insertPayload);
       // Wait for insert then refresh to get real ID
       await fetchLogs();
+      return insertedLog;
     } catch (err) {
       if (isNetworkError(err)) {
         // Network/offline failure — keep the optimistic item and queue for retry
@@ -175,6 +183,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
         } catch (storageErr) {
           console.error('Failed to save to offline queue:', storageErr);
         }
+        return optimisticLog;
       } else {
         // Server-side error (validation, permissions, etc.) — revert optimistic update
         console.error('Server rejected log insert, reverting optimistic update', err);
@@ -188,7 +197,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     if (!userId) throw new Error('User not authenticated');
 
     // Optimistically update
-    setLogs(prev => prev.map(log =>
+    setLogs((prev: LogEntry[]) => prev.map(log =>
       log.id === id ? { ...log, ...updates } : log
     ));
 
@@ -203,12 +212,54 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     }
   };
 
+  const deleteLog = async (id: string): Promise<void> => {
+    if (!userId) return;
+
+    const logToDelete = logs.find(l => l.id === id);
+
+    // Optimistic update — remove from local state immediately
+    setLogs((prev: LogEntry[]) => prev.filter(l => l.id !== id));
+
+    if (logToDelete) {
+      try {
+        const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
+        if (queueData) {
+          const queue: Omit<LogEntry, 'id' | 'created_at'>[] = JSON.parse(queueData);
+          const newQueue = queue.filter(q => q.timestamp !== logToDelete.timestamp);
+          if (newQueue.length !== queue.length) {
+            if (newQueue.length === 0) {
+              await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+            } else {
+              await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(newQueue));
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.error('Failed to remove from offline queue on delete:', storageErr);
+      }
+    }
+
+    try {
+      await dbSetLogCancelled(id, userId);
+    } catch (err: unknown) {
+      // Revert — re-fetch to restore correct state
+      fetchLogs();
+      if (err instanceof Error && err.message.includes('Undo window expired')) {
+        const expiredError = new Error('Too late to undo');
+        (expiredError as any).code = 'EXPIRED';
+        throw expiredError;
+      }
+      throw new Error('Failed to cancel log');
+    }
+  };
+
   return {
     logs,
     isLoading,
     error,
     addLog,
     editLog,
+    deleteLog,
     refresh: fetchLogs,
   };
 };

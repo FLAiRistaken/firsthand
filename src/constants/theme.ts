@@ -1,10 +1,17 @@
 export const Colors = {
   primary: '#2A5C45',
   primaryLight: '#E8F2ED',
+  primaryBorder: '#C8E2D5',
   amber: '#9C6B1A',
   amberLight: '#FDF3E3',
+  amberDark: '#8B6914',
   sinBg: '#FAF5EE',
   sinBorder: '#E8DDD0',
+  sinText: '#5A4A38',
+  sinTextLight: '#B8A898',
+  sinIconMuted: '#C4A882',
+  sinIconBg: '#DDD5C8',
+  sinCategoryText: '#7A6654',
   appBg: '#F7F6F3',
   cardBg: '#FFFFFF',
   border: '#F0EEE9',
@@ -19,6 +26,11 @@ export const Colors = {
   success: '#34C759',
   black: '#000000',
   tabInactive: '#C8C4BE',
+  googleBlue: '#4285F4',
+  googleGreen: '#34A853',
+  googleYellow: '#FBBC05',
+  googleRed: '#EA4335',
+  overlay: 'rgba(0, 0, 0, 0.3)',
 }
 
 export const Fonts = {
@@ -43,11 +55,24 @@ export const FontSizes = {
 export const Spacing = {
   xs: 4,
   sm: 8,
+  smLg: 10,
   md: 12,
   lg: 16,
   xl: 20,
   xxl: 24,
+  xxxl: 48,
   screen: 22,
+}
+
+export const Sizes = {
+  buttonHeight: 52,
+  iconSm: 18,
+}
+
+export const BorderWidths = {
+  sm: 1,
+  md: 1.5,
+  lg: 2,
 }
 
 export const Radius = {
