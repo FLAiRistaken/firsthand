@@ -75,25 +75,25 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 ### 🔲 Phase 4 — History Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 4.1 | History screen layout | 🔲 Pending | Grouped by day, collapsible day headers, mini ratio bar per day |
-| 4.2 | Filter pills | 🔲 Pending | All / Wins / AI uses |
-| 4.3 | Log entry edit | 🔲 Pending | Edit note, category, context only — no type change, no delete |
+| 4.1 | History screen layout | ✅ Done | Grouped by day, collapsible day headers, mini ratio bar per day |
+| 4.2 | Filter pills | ✅ Done | All / Wins / AI uses |
+| 4.3 | Log entry edit | ✅ Done | Edit note, category, context only — no type change, no delete |
 
 ---
 
 ### 🔲 Phase 5 — Coach Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 5.1 | Coach screen layout | 🔲 Pending | Chat UI, coach identity bar |
-| 5.2 | Anthropic API integration | 🔲 Pending | Uses `callClaude` and `COACH_SYSTEM(profile)` |
-| 5.3 | Quick prompts | 🔲 Pending | Shown on first open, disappear after first user message |
+| 5.1 | Coach screen layout | ✅ Done | Chat UI, coach identity bar |
+| 5.2 | Anthropic API integration | ✅ Done | Uses `callClaude` and `COACH_SYSTEM(profile)` |
+| 5.3 | Quick prompts | ✅ Done | Shown on first open, disappear after first user message |
 
 ---
 
 ### 🔲 Phase 6 — Profile Screen
 | # | Task | Status | Notes |
 |---|---|---|---|
-| 6.1 | Profile screen | 🔲 Pending | Name, occupation, custom categories management, view onboarding answers, sign out |
+| 6.1 | Profile screen | ✅ Done | Name, occupation, custom categories management, view onboarding answers, sign out, behaviour settings |
 
 ---
 
@@ -101,16 +101,17 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | # | Task | Status | Notes |
 |---|---|---|---|
 | 7.1 | Empty states | 🔲 Pending | All screens need explicit empty states |
-| 7.2 | Error boundaries | 🔲 Pending | All screens |
+| 7.2 | Error boundaries | ✅ Done | All main screens (Home, History, Coach, Onboarding) wrapped |
 | 7.3 | Loading states | 🔲 Pending | All data-driven components |
 | 7.4 | Anthropic API backend proxy | ✅ Done | Express proxy server created in /server, ready for deployment |
 | 7.5 | App icon + splash screen | 🔲 Pending | Firsthand green dot identity |
 | 7.6 | Apple Developer account | 🔲 Pending | Required for real Apple Sign In + TestFlight |
 | 7.7 | Development build via EAS | 🔲 Pending | Removes Expo Go limitations, enables Google Sign In |
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
-| 7.9 | TestFlight build | 🔲 Pending | First real device test |
+| 7.9 | Note 200-char limit — LogModal + EditLogModal | ✅ Done | maxLength enforced, counter appears at 180 chars |
 | 7.10 | App Store submission | 🔲 Pending | |
 | 7.11 | First-launch tutorial | 🔲 Pending | 4-step overlay after onboarding transition — highlights Home buttons, History, Coach. Shown once, stored in AsyncStorage |
+| 7.12 | Dead code cleanup | ✅ Done | Removed non-existent `log.cancelled` filter from `getLogs` |
 
 ---
 
@@ -120,13 +121,22 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 
 | File / Area | Issue | Fix |
 |---|---|---|
-| `src/screens/AuthScreen.tsx` | Apple Sign In gated on `Platform.OS === 'ios'` only | Change to `Platform.OS === 'ios' \|\| Platform.OS === 'macos'` |
-| `src/screens/AuthScreen.tsx` | Google env var check throws at render time, crashing the screen if vars are missing | Defer the throw to `handleGoogleSignIn` so the screen renders even without real Google credentials |
-| `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH` active | ✅ Removed |
-| `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real import of `@react-native-google-signin/google-signin` once a development build is configured |
-| `.env.local` | Google client IDs are placeholders | Replace with real OAuth credentials when Google Sign In is configured |
 | `BUILD_PLAN.md` (Decisions Log) | Said model is Haiku, but code is Sonnet after Copilot's revert | Code is `claude-sonnet-4-5`. Decisions Log updated below. |
 | `OnboardingScreen / ProfileContext` | Brief onboarding flicker during account creation — onAuthStateChange fires before setProfile completes | Add `isCreatingAccount` flag to ProfileContext to suppress routing during account creation |
+| `src/screens/AuthScreen.tsx` | Apple Sign In gate | ✅ Fixed — `'ios' \|\| 'macos'` |
+| `src/screens/AuthScreen.tsx` | Google env var crash on render | ✅ Fixed — deferred to button press |
+| `src/lib/devConfig.ts` | DEV_BYPASS_AUTH active | ✅ Fully removed |
+| `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real `@react-native-google-signin/google-signin` once EAS dev build configured |
+| `.env.local` | Google client IDs are placeholders | Replace once Google Sign In configured |
+| `src/lib/anthropic.ts` | Sonnet model string | ✅ Fixed — `claude-sonnet-4-6` |
+| `src/screens/CoachScreen.tsx` | Haiku model string | ✅ Fixed — `claude-haiku-4-5-20251001` |
+| `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | ✅ Fixed — Removed dead filter |
+| `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | ✅ Fixed — Renamed to `deleteLog` for clarity |
+| `src/screens/CoachScreen.tsx` | Auto-scroll doesn't reach bottom of last message | Investigate `scrollToEnd` timing — Phase 7 polish |
+| `src/screens/CoachScreen.tsx` | API error shows fake fallback question | Show honest error message — Phase 7.10 |
+| `src/components/LogModal.tsx` (and EditLogModal) | Note `maxLength` not enforced | Add `maxLength={200}` and counter — Phase 7.9 |
+| Profile screen | Custom categories list grows unbounded in UI | Soft cap 20 visible — Phase 7.13 |
+| ProfileContext | `isCreatingAccount` flag wired up correctly? | Audit during Phase 7 — set in `try`, cleared in `finally`, checked in RootNavigator |
 
 ---
 
@@ -176,6 +186,7 @@ Do not build any of the following until explicitly added to the build plan:
 
 | # | Prompt | Outcome |
 |---|---|---|
+| 12 | Profile screen + AppNavigator stack | ✅ Merged |
 | 01 | Theme constants + font loading | ✅ Merged — Copilot fixed font key strings, `Category` type with `string & {}` |
 | 02 | Supabase client + types + DB schema + helpers | ✅ Merged — Copilot fixed `.maybeSingle()`, `updateLog` userId param, removed `Database = any` |
 | 03 | Navigation shell + tab bar + screen placeholders | ✅ Merged — Copilot fixed unused imports + `onAuthStateChange` subscription |
@@ -190,17 +201,36 @@ Do not build any of the following until explicitly added to the build plan:
 | 07f | AuthScreen design fix + missing theme tokens | ✅ Merged |
 | 08 | Onboarding screen | ✅ Merged |
 | 09 | Home screen + LogModal | ✅ Merged |
-| 10 | History screen | 🔲 Pending — prompt ready in handoff document |
-| 11 | Coach screen | 🔲 Pending — prompt ready in handoff document |
-| 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
+| 10 | History screen | ✅ Merged |
+| 11 | Coach screen | ✅ Merged |
+| 12 | Profile screen | ✅ Merged |
 | 13 | ProfileContext — shared profile state | ✅ Merged |
+| 17 | Profile screen rework — edit UX, visual refresh, behaviour settings | ✅ Merged |
 
 | 09 | Home screen + LogModal component | ✅ Merged |
 | 09b | Undo window + deleteLog | ✅ Merged |
 | 09c | Undo expiry error propagation | ✅ Merged |
 | 14 | Fix stale session routing bug | ✅ Merged |
 | 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
-| 16 | Create Express proxy server for Anthropic API | ✅ Merged |
+| 20 | Create Express proxy server for Anthropic API | ✅ Merged |
+| 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
+| 17 | Model string updates (Sonnet 4.6, Haiku dated) | ✅ Merged |
+| 18 | Error boundaries — all main screens | ✅ Merged |
+| 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
+
+### Hotfixes via Antigravity (smaller, surgical changes)
+- RLS DELETE policy added to logs table (resolved silent 204 undo bug)
+- `EXPO_PUBLIC_SUPABASE_URL` had `/rest/v1` appended — fixed
+- `addLog` race condition fixed (removed `fetchLogs()` after success)
+- Offline queue `pendingDeleteTimestamps` ref to prevent undone-log re-insertion
+- ProfileContext silent sign-out removed (was incorrectly signing out new users)
+- `isCreatingAccount` flag added to ProfileContext
+- **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
+- **HF-04**: Profile rework PR fixes — icon paths, LogContext type, LogModal dep array, error handling — ✅ Merged
+- **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
+- **HF-05**: Note 200-char enforcement — LogModal + EditLogModal — ✅ Merged
+- **HF-06**: develop→main PR fixes — theme tokens, ErrorBoundary on Profile, model param fix — ✅ Merged
+
 ---
 
 ## Notes for Future Sessions

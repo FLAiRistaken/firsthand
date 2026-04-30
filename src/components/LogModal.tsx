@@ -10,14 +10,15 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Radius, Spacing, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
 import type { LogContext } from '../lib/types';
+import { useProfile } from '../hooks/useProfile';
 
 interface LogModalProps {
   visible: boolean;
   type: 'win' | 'sin';
-  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => Promise<void>;
+  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context?: LogContext }) => Promise<void>;
   onClose: () => void;
   customCategories: string[];
   onAddCategory: (category: string) => Promise<void>;
@@ -31,9 +32,13 @@ export const LogModal = ({
   customCategories,
   onAddCategory
 }: LogModalProps) => {
+  const { profile } = useProfile();
+
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [note, setNote] = useState<string>('');
-  const [selectedContext, setSelectedContext] = useState<LogContext | undefined>();
+  const [selectedContext, setSelectedContext] = useState<LogContext | undefined>(
+    profile?.default_context ?? undefined
+  );
   const [addingCategory, setAddingCategory] = useState<boolean>(false);
   const [newCategoryInput, setNewCategoryInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -41,7 +46,7 @@ export const LogModal = ({
   const resetState = () => {
     setSelectedCategory('');
     setNote('');
-    setSelectedContext(undefined);
+    setSelectedContext(profile?.default_context ?? undefined);
     setAddingCategory(false);
     setNewCategoryInput('');
   };
@@ -57,7 +62,7 @@ export const LogModal = ({
   // Reset category/context when switching between win and sin.
   useEffect(() => {
     resetState();
-  }, [type]);
+  }, [type, profile?.default_context]);
 
   const isWin = type === 'win';
   const activeColor = isWin ? Colors.primary : Colors.amber;
@@ -73,12 +78,12 @@ export const LogModal = ({
         type,
         category: selectedCategory,
         note: note.trim(),
-        context: selectedContext,
+        ...(selectedContext ? { context: selectedContext } : {}),
       });
       // Reset state
       setSelectedCategory('');
       setNote('');
-      setSelectedContext(undefined);
+      setSelectedContext(profile?.default_context ?? undefined);
       setAddingCategory(false);
       setNewCategoryInput('');
     } catch (err: unknown) {
@@ -217,14 +222,27 @@ export const LogModal = ({
               </View>
             </View>
 
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Quick note… (optional)"
-              placeholderTextColor={Colors.textHint}
-              value={note}
-              onChangeText={setNote}
-              multiline
-            />
+            <View style={styles.noteWrapper}>
+              <TextInput
+                style={styles.noteInput}
+                placeholder="Quick note… (optional)"
+                placeholderTextColor={Colors.textHint}
+                value={note}
+                onChangeText={setNote}
+                multiline
+                maxLength={200}
+              />
+              {note.length >= 180 && (
+                <Text
+                  style={[
+                    styles.noteCounter,
+                    { color: note.length >= 200 ? Colors.amber : Colors.textHint },
+                  ]}
+                >
+                  {note.length}/200
+                </Text>
+              )}
+            </View>
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={loading}>
@@ -369,9 +387,17 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.base,
     fontFamily: Fonts.sans,
     color: Colors.textPrimary,
-    marginBottom: 18,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+  noteWrapper: {
+    marginBottom: 18,
+  },
+  noteCounter: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    textAlign: 'right',
+    marginTop: Spacing.xs,
   },
   actionRow: {
     flexDirection: 'row',

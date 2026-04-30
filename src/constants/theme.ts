@@ -12,6 +12,11 @@ export const Colors = {
   sinIconMuted: '#C4A882',
   sinIconBg: '#DDD5C8',
   sinCategoryText: '#7A6654',
+  sinIconColor: '#AAA',
+  sinLabelText: '#7A6654',
+  contextWinText: '#3A7A60',
+  contextSinBg: '#EDE0CE',
+  contextSinText: '#A08060',
   appBg: '#F7F6F3',
   cardBg: '#FFFFFF',
   border: '#F0EEE9',
@@ -67,6 +72,7 @@ export const Spacing = {
 export const Sizes = {
   buttonHeight: 52,
   iconSm: 18,
+  avatar: 72,
 }
 
 export const BorderWidths = {
