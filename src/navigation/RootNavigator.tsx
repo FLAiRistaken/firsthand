@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Session } from '@supabase/supabase-js';
@@ -8,7 +8,6 @@ import AuthScreen from '../screens/AuthScreen';
 import { Colors } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 import { ProfileProvider, useProfileContext } from '../contexts/ProfileContext';
-import { supabase } from '../lib/supabase';
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -22,12 +21,6 @@ function RootNavigatorContent({ session, isLoading: authLoading }: { session: Se
   const { profile, isLoading: profileLoading } = useProfileContext();
 
   const isScreenLoading = authLoading || (!!session && profileLoading);
-
-  useEffect(() => {
-    if (session && !profileLoading && !profile) {
-      supabase.auth.signOut().catch(() => {});
-    }
-  }, [session, profileLoading, profile]);
 
   if (isScreenLoading) {
     return (
