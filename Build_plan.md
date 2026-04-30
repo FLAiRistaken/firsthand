@@ -101,7 +101,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | # | Task | Status | Notes |
 |---|---|---|---|
 | 7.1 | Empty states | 🔲 Pending | All screens need explicit empty states |
-| 7.2 | Error boundaries | 🔲 Pending | All screens |
+| 7.2 | Error boundaries | ✅ Done | All main screens (Home, History, Coach, Onboarding) wrapped |
 | 7.3 | Loading states | 🔲 Pending | All data-driven components |
 | 7.4 | Anthropic API backend proxy | 🔲 Pending | Move API calls server-side — host on Railway |
 | 7.5 | App icon + splash screen | 🔲 Pending | Firsthand green dot identity |
@@ -111,6 +111,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.9 | TestFlight build | 🔲 Pending | First real device test |
 | 7.10 | App Store submission | 🔲 Pending | |
 | 7.11 | First-launch tutorial | 🔲 Pending | 4-step overlay after onboarding transition — highlights Home buttons, History, Coach. Shown once, stored in AsyncStorage |
+| 7.12 | Dead code cleanup | ✅ Done | Removed non-existent `log.cancelled` filter from `getLogs` |
 
 ---
 
@@ -129,8 +130,8 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 | `.env.local` | Google client IDs are placeholders | Replace once Google Sign In configured |
 | `src/lib/anthropic.ts` | Sonnet model string | ✅ Fixed — `claude-sonnet-4-6` |
 | `src/screens/CoachScreen.tsx` | Haiku model string | ✅ Fixed — `claude-haiku-4-5-20251001` |
-| `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | Remove dead filter — Phase 7.12 |
-| `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | Rename to `deleteLog` for clarity — minor refactor |
+| `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | ✅ Fixed — Removed dead filter |
+| `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | ✅ Fixed — Renamed to `deleteLog` for clarity |
 | `src/screens/CoachScreen.tsx` | Auto-scroll doesn't reach bottom of last message | Investigate `scrollToEnd` timing — Phase 7 polish |
 | `src/screens/CoachScreen.tsx` | API error shows fake fallback question | Show honest error message — Phase 7.10 |
 | `src/components/LogModal.tsx` (and EditLogModal) | Note `maxLength` not enforced | Add `maxLength={200}` and counter — Phase 7.9 |
@@ -212,6 +213,9 @@ Do not build any of the following until explicitly added to the build plan:
 | 14 | Fix stale session routing bug | ✅ Merged |
 | 15 | Onboarding-first flow + sign-in bug fix | ✅ Merged |
 | 16 | AI model flexibility + Haiku for Coach | ✅ Merged |
+| 17 | Model string updates (Sonnet 4.6, Haiku dated) | ✅ Merged |
+| 18 | Error boundaries — all main screens | ✅ Merged |
+| 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)
@@ -222,6 +226,7 @@ Do not build any of the following until explicitly added to the build plan:
 - `isCreatingAccount` flag added to ProfileContext
 - **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
 - **HF-04**: Profile rework PR fixes — icon paths, LogContext type, LogModal dep array, error handling — ✅ Merged
+- **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
 
 ---
 

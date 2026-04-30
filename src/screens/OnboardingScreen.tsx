@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth';
 import { UserProfile } from '../lib/types';
 import { SendIcon } from '../components/icons/SendIcon';
 import { supabase } from '../lib/supabase';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -301,6 +302,7 @@ export default function OnboardingScreen() {
   };
 
   return (
+    <ErrorBoundary screenName="Onboarding">
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -384,6 +386,7 @@ export default function OnboardingScreen() {
         </View>
       )}
     </KeyboardAvoidingView>
+    </ErrorBoundary>
   );
 }
 

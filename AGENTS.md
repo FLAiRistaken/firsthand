@@ -29,7 +29,7 @@ Build progress and decisions log: `/BUILD_PLAN.md`.
 | Navigation | `@react-navigation/native` + `@react-navigation/bottom-tabs` | Custom TabBar component |
 | Backend / DB | Supabase (Postgres, Auth, Realtime) | RLS enabled on all tables |
 | Auth | Sign in with Apple (iOS + macOS), Google (stubbed in Expo Go) | Apple required for App Store |
-| AI | Anthropic API — `claude-sonnet-4-5` | See decision in BUILD_PLAN about Haiku/Sonnet |
+| AI | Anthropic API — `claude-sonnet-4-6` | See decision in BUILD_PLAN about Haiku/Sonnet |
 | Local storage | `@react-native-async-storage/async-storage` | Offline queue, session persistence |
 | State | React hooks + context (no Redux) | |
 | Icons | `react-native-svg` | Custom SVG icons in `src/components/icons/` |
@@ -90,11 +90,9 @@ Colors.success       // #34C759 — green status indicator
 
 ### Typography
 ```typescript
-Fonts.serifRegular     // 'Fraunces_400Regular'
-Fonts.serifMedium      // 'Fraunces_500Medium'
+Fonts.serif            // 'Fraunces_400Regular'
 Fonts.serifSemiBold    // 'Fraunces_600SemiBold'
-Fonts.sansLight        // 'DMSans_300Light'
-Fonts.sansRegular      // 'DMSans_400Regular'
+Fonts.sans             // 'DMSans_400Regular'
 Fonts.sansMedium       // 'DMSans_500Medium'
 ```
 
@@ -160,7 +158,7 @@ interface UserProfile {
 ```
 
 ### Hard rules — enforced in `src/lib/db.ts`
-- **No `deleteLog` function exists.** Logs cannot be deleted.
+- **A `deleteLog` function exists in db.ts but is ONLY called from the 30-second undo window in useLogs.** It performs a hard DELETE scoped by both id and user_id. It must never be exposed to users as a manual delete action. No deletion outside the undo window.
 - **Type (win/sin) is immutable** after insert.
 - **Editable fields only:** `note`, `category`, `context`, `duration_mins`.
 - **All updates are scoped by `user_id`** — `updateLog(id, updates, userId)` filters on both `id` and `user_id` to prevent cross-user updates even if RLS were misconfigured.
@@ -224,7 +222,7 @@ interface UserProfile {
 |---|---|
 | `src/lib/supabase.ts` | Typed Supabase client, throws if env vars missing |
 | `src/lib/types.ts` | `LogEntry`, `UserProfile`, `LogType`, `LogContext`, `AppState` |
-| `src/lib/db.ts` | `getLogs`, `insertLog`, `updateLog`, `getProfile`, `upsertProfile` (NO delete) |
+| `src/lib/db.ts` | `getLogs`, `insertLog`, `updateLog`, `deleteLog`, `getProfile`, `upsertProfile` |
 | `src/lib/anthropic.ts` | `callClaude(messages, system, maxTokens)` — fetch only, 30s AbortController, model `claude-sonnet-4-5` |
 | `src/lib/prompts.ts` | `ONBOARDING_SYSTEM`, `COACH_SYSTEM`, `ONBOARDING_COMPLETE_TOKEN`, `ONBOARDING_HINTS`, `sanitizePromptValue` |
 | `src/lib/devConfig.ts` | `DEV_BYPASS_AUTH`, `DEV_USER` — DEV ONLY, must be removed before production |
@@ -341,10 +339,9 @@ Do not implement any of the following unless explicitly added to the build plan:
 
 These items are intentional dev shortcuts that **must be reversed before any production or TestFlight build**:
 
-1. `DEV_BYPASS_AUTH` in `src/lib/devConfig.ts` — search "DEV ONLY" to find all bypass locations
-2. `src/lib/googleSignIn.ts` stub — replace with real import of `@react-native-google-signin/google-signin` once a development build is configured
-3. `Platform.OS === 'ios'` Apple gate in `AuthScreen.tsx` — fix to `'ios' || 'macos'`
-4. Placeholder Google client IDs in `.env.local` — replace with real ones when Google OAuth is configured
+1. `src/lib/googleSignIn.ts` stub — replace with real import of `@react-native-google-signin/google-signin` once a development build is configured
+2. `Platform.OS === 'ios'` Apple gate in `AuthScreen.tsx` — fix to `'ios' || 'macos'`
+3. Placeholder Google client IDs in `.env.local` — replace with real ones when Google OAuth is configured
 
 ---
 
