@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.xl,
   },
   dividerLine: {
-    height: 1,
+    height: BorderWidths.sm,
     flex: 1,
     backgroundColor: Colors.border,
   },
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     borderWidth: BorderWidths.md,
     borderColor: Colors.inputBorder,
     borderRadius: Radius.pill,
-    paddingHorizontal: 18,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
