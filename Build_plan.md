@@ -199,6 +199,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 09 | Home screen + LogModal component | ✅ Merged |
 | 09b | Undo window + deleteLog | ✅ Merged |
 | 09c | Undo expiry error propagation | ✅ Merged |
+| 14 | Fix stale session routing bug | ✅ Merged |
 ---
 
 ## Notes for Future Sessions

@@ -30,9 +30,11 @@ function RootNavigatorContent({ session, isLoading: authLoading }: { session: Se
     );
   }
 
+  const noProfile = !!session && !profileLoading && !profile;
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!session ? (
+      {!session || noProfile ? (
         <Stack.Screen name="Auth" component={AuthScreen} />
       ) : profile?.onboarded ? (
         <Stack.Screen name="App" component={AppNavigator} />
