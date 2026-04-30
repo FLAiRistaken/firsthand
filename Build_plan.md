@@ -3,6 +3,8 @@
 > Tracks build order, completed tasks, and what's coming next.
 > Updated by Jules as part of each task. Do not edit manually outside that flow.
 
+| 3.7 | Undo window (30s) | ✅ Done | Hard delete within 30s window only, undo toast in HomeScreen |
+
 ---
 
 ## Orchestration Setup
@@ -65,6 +67,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 3.4 | Ratio bar component | ✅ Done | 7-day own work % with personal avg |
 | 3.5 | Today's log list | ✅ Done | Collapsible, reverse chronological |
 | 3.6 | Offline queue | ✅ Done | Implemented in useLogs — AsyncStorage queue, flushes on reconnect and app foreground |
+| 3.7 | Undo window (30s) | ✅ Done | Hard delete within 30s window only, undo toast in HomeScreen |
 
 ---
 
@@ -186,6 +189,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 12 | Profile screen | 🔲 Pending — prompt ready in handoff document |
 
 | 09 | Home screen + LogModal component | ✅ Merged |
+| 09b | Undo window + deleteLog | ✅ Merged |
 ---
 
 ## Notes for Future Sessions
