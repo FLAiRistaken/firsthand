@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes } from '../constants/theme';
 import { callClaude } from '../lib/anthropic';
 import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUserProfile } from '../lib/prompts';
-import { useProfile } from '../hooks/useProfile';
+import { upsertProfile } from '../lib/db';
 import { useAuth } from '../hooks/useAuth';
 import { SendIcon } from '../components/icons/SendIcon';
 import { supabase } from '../lib/supabase';
@@ -57,7 +57,6 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { userId } = useAuth();
-  const { updateProfile } = useProfile();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -140,7 +139,7 @@ export default function OnboardingScreen() {
       }
 
       // Wait briefly for session to propagate
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) throw new Error('Account created but session not found.');
@@ -148,14 +147,17 @@ export default function OnboardingScreen() {
       const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
       const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
-      // Write all collected onboarding answers + onboarded: true
-      await updateProfile({
+      // Call upsertProfile directly with confirmed userId — bypasses context
+      // timing issue where auth headers haven't propagated yet
+      await upsertProfile({
+        id: session.user.id,
         name: profileRef.current.name,
         occupation: profileRef.current.occupation || '',
         ai_tools_used: tools,
         primary_uses: uses,
         goal: profileRef.current.goal || '',
         success_definition: profileRef.current.success_definition || '',
+        custom_categories: [],
         onboarded: true,
       });
 
