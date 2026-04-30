@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
@@ -42,6 +42,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const pendingDeleteTimestamps = useRef<Set<string>>(new Set());
 
   const fetchLogs = useCallback(async () => {
     if (!userId) {
@@ -73,13 +74,28 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
       const queue: Omit<LogEntry, 'id' | 'created_at'>[] = JSON.parse(queueData);
       if (queue.length === 0) return;
 
-      console.log(`Flushing ${queue.length} offline logs to Supabase`);
+      const filteredQueue = queue.filter(
+        (entry: Omit<LogEntry, 'id' | 'created_at'>) =>
+          !pendingDeleteTimestamps.current.has(entry.timestamp)
+      );
 
-      const newQueue = [...queue];
+      if (filteredQueue.length !== queue.length) {
+        if (filteredQueue.length === 0) {
+          await AsyncStorage.removeItem(OFFLINE_QUEUE_KEY);
+        } else {
+          await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(filteredQueue));
+        }
+      }
+
+      if (filteredQueue.length === 0) return;
+
+      console.log(`Flushing ${filteredQueue.length} offline logs to Supabase`);
+
+      const newQueue = [...filteredQueue];
       const successfullyInserted: LogEntry[] = [];
 
-      for (let i = 0; i < queue.length; i++) {
-        const item = queue[i];
+      for (let i = 0; i < filteredQueue.length; i++) {
+        const item = filteredQueue[i];
         // Ensure user_id is set correctly for the current user
         const itemToInsert = { ...item, user_id: userId };
 
@@ -220,6 +236,10 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     // Optimistic update — remove from local state immediately
     setLogs((prev: LogEntry[]) => prev.filter(l => l.id !== id));
 
+    if (logToDelete?.timestamp) {
+      pendingDeleteTimestamps.current.add(logToDelete.timestamp);
+    }
+
     if (logToDelete) {
       try {
         const queueData = await AsyncStorage.getItem(OFFLINE_QUEUE_KEY);
@@ -241,7 +261,6 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
 
     try {
       await dbSetLogCancelled(id, userId);
-      await fetchLogs(); // ensure server state is source of truth
     } catch (err: unknown) {
       // Revert — re-fetch to restore correct state
       fetchLogs();
