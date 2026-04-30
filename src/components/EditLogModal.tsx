@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Colors, Fonts, FontSizes, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Radius, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
 import { BrainIcon } from './icons/BrainIcon';
 import { ChipIcon } from './icons/ChipIcon';
@@ -35,6 +35,7 @@ export const EditLogModal = ({
   const [note, setNote] = useState('');
   const [category, setCategory] = useState('');
   const [context, setContext] = useState<LogContext | undefined>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (visible && log) {
@@ -50,10 +51,18 @@ export const EditLogModal = ({
   const activeColor = isWin ? Colors.primary : Colors.amber;
   const lightColor = isWin ? Colors.primaryLight : Colors.amberLight;
 
-  const allCategories = ['coding', 'writing', 'planning', 'research', 'other', ...customCategories];
+  const allCategories = [...DEFAULT_CATEGORIES, ...customCategories];
 
-  const handleSave = () => {
-    onSave(log.id, { note, category, context });
+  const handleSave = async (): Promise<void> => {
+    setIsSaving(true);
+    try {
+      await onSave(log.id, { note, category, context });
+      onClose();
+    } catch (error: unknown) {
+      console.error('Failed to save log:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formattedDate = new Date(log.timestamp).toLocaleDateString('en-GB', {
@@ -88,10 +97,10 @@ export const EditLogModal = ({
 
             <Card style={styles.readOnlyCard}>
               <View style={styles.readOnlyTop}>
-                <View style={[styles.iconCircle, { backgroundColor: isWin ? Colors.primary : '#DDD5C8' }]}>
-                  {isWin ? <BrainIcon size={16} color="white" /> : <ChipIcon size={16} color="#AAA" />}
+                <View style={[styles.iconCircle, { backgroundColor: isWin ? Colors.primary : Colors.sinIconBg }]}>
+                  {isWin ? <BrainIcon size={16} color="white" /> : <ChipIcon size={16} color={Colors.sinIconColor} />}
                 </View>
-                <Text style={[styles.readOnlyLabel, { color: isWin ? Colors.primary : '#7A6654' }]}>
+                <Text style={[styles.readOnlyLabel, { color: isWin ? Colors.primary : Colors.sinLabelText }]}>
                   {isWin ? 'Win' : 'AI use'}
                 </Text>
               </View>
@@ -167,12 +176,12 @@ export const EditLogModal = ({
               <TouchableOpacity
                 style={[
                   styles.saveButton,
-                  { backgroundColor: activeColor, opacity: category ? 1 : 0.5 },
+                  { backgroundColor: activeColor, opacity: (isSaving || !category) ? 0.5 : 1 },
                 ]}
                 onPress={handleSave}
-                disabled={!category}
+                disabled={isSaving || !category}
               >
-                <Text style={styles.saveText}>Save changes</Text>
+                <Text style={styles.saveText}>{isSaving ? 'Saving...' : 'Save changes'}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

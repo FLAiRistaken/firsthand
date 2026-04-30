@@ -10,6 +10,7 @@ import { PersonIcon } from '../components/icons/PersonIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { ChipIcon } from '../components/icons/ChipIcon';
 import { EditLogModal } from '../components/EditLogModal';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import type { LogEntry } from '../lib/types';
 import Svg, { Path } from 'react-native-svg';
 
@@ -35,7 +36,9 @@ export default function HistoryScreen() {
   const groupedLogs = useMemo(() => {
     const grouped: Record<string, LogEntry[]> = {};
     const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = yesterdayDate.toDateString();
 
     const reversedLogs = [...logs].reverse();
 
@@ -60,7 +63,7 @@ export default function HistoryScreen() {
     return grouped;
   }, [logs]);
 
-  const handleSave = async (id: string, updates: Parameters<typeof editLog>[1]) => {
+  const handleSave = async (id: string, updates: Parameters<typeof editLog>[1]): Promise<void> => {
     await editLog(id, updates);
     setEditingLog(null);
   };
@@ -75,7 +78,8 @@ export default function HistoryScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ErrorBoundary onError={(error, errorInfo) => console.error('HistoryScreen error:', error, errorInfo)}>
+      <View style={styles.container}>
       {/* Fixed Header */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={styles.topRow}>
@@ -110,13 +114,13 @@ export default function HistoryScreen() {
         showsVerticalScrollIndicator={false}
       >
         {Object.entries(groupedLogs).map(([day, entries]) => {
-          const wCount = entries.filter((e: any) => e.type === 'win').length;
-          const sCount = entries.filter((e: any) => e.type === 'sin').length;
+          const wCount = entries.filter((e: LogEntry) => e.type === 'win').length;
+          const sCount = entries.filter((e: LogEntry) => e.type === 'sin').length;
           const total = wCount + sCount;
           const pct = total === 0 ? 0 : Math.round((wCount / total) * 100);
           const isOpen = expandedDays[day] ?? false;
 
-          const filtered = entries.filter((e: any) =>
+          const filtered = entries.filter((e: LogEntry) =>
             filter === 'all'
               ? true
               : filter === 'wins'
@@ -170,7 +174,7 @@ export default function HistoryScreen() {
                       No {filter} for this day
                     </Text>
                   ) : (
-                    filtered.map((entry: any) => {
+                    filtered.map((entry: LogEntry) => {
                       const isWin = entry.type === 'win';
                       return (
                         <TouchableOpacity
@@ -191,7 +195,7 @@ export default function HistoryScreen() {
                             {isWin ? (
                               <BrainIcon size={13} color="white" />
                             ) : (
-                              <ChipIcon size={13} color="#AAA" />
+                              <ChipIcon size={13} color={Colors.sinIconColor} />
                             )}
                           </View>
 
@@ -240,7 +244,7 @@ export default function HistoryScreen() {
             </View>
           );
         })}
-        <View style={{ height: 20 }} />
+        <View style={styles.spacer20} />
       </ScrollView>
 
       <EditLogModal
@@ -251,6 +255,7 @@ export default function HistoryScreen() {
         customCategories={profile?.custom_categories ?? []}
       />
     </View>
+    </ErrorBoundary>
   );
 }
 
@@ -310,7 +315,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.serifSemiBold,
-    fontSize: 24,
+    fontSize: FontSizes.xxl,
     color: Colors.textPrimary,
     marginBottom: 12,
   },
@@ -321,6 +326,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 0,
+  },
+  spacer20: {
+    height: Spacing.xl,
   },
   dayGroup: {
     marginBottom: 16,
@@ -439,11 +447,11 @@ const styles = StyleSheet.create({
   },
   contextWin: {
     backgroundColor: Colors.primaryBorder,
-    color: '#3A7A60',
+    color: Colors.contextWinText,
   },
   contextSin: {
-    backgroundColor: '#EDE0CE',
-    color: '#A08060',
+    backgroundColor: Colors.contextSinBg,
+    color: Colors.contextSinText,
   },
   entryNote: {
     fontFamily: Fonts.sans,
