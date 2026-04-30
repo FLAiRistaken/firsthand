@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, TextInput, Alert, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { Colors, Fonts, FontSizes, Spacing, Radius, Sizes, BorderWidths } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin, type GoogleSignInResult } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
@@ -29,6 +30,8 @@ const GoogleIcon = () => (
 );
 
 export default function AuthScreen() {
+  const insets = useSafeAreaInsets();
+
   const [appleLoading, setAppleLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -152,7 +155,13 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, Spacing.xxl),
+            paddingBottom: Math.max(insets.bottom, Spacing.xxl),
+          }
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -289,7 +298,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.xxl,
   },
   content: {
     alignItems: 'center',
@@ -304,11 +312,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greenDot: {
-    width: 10,
-    height: 10,
+    width: Spacing.smLg,
+    height: Spacing.smLg,
     borderRadius: Radius.full,
     backgroundColor: Colors.primary,
-    marginRight: 8,
+    marginRight: Spacing.sm,
   },
   wordmark: {
     fontFamily: Fonts.serifSemiBold,
