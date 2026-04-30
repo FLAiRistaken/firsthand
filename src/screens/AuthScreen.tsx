@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, TextInput, Alert, KeyboardAvoidingView, ScrollView } from 'react-native';
-import { Colors, Fonts, FontSizes, Spacing, Radius } from '../constants/theme';
+import { Colors, Fonts, FontSizes, Spacing, Radius, Sizes, BorderWidths } from '../constants/theme';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '../lib/googleSignIn';
 import { supabase } from '../lib/supabase';
 import Svg, { Path } from 'react-native-svg';
 
 const GoogleIcon = () => (
-  <Svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+  <Svg width={Sizes.iconSm} height={Sizes.iconSm} viewBox="0 0 18 18" fill="none">
     <Path
       d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z"
-      fill="#4285F4"
+      fill={Colors.googleBlue}
     />
     <Path
       d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4205 9 14.4205C6.65591 14.4205 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z"
-      fill="#34A853"
+      fill={Colors.googleGreen}
     />
     <Path
       d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29H0.957275V9.62182C0.347727 8.42318 0 7.07318 0 5.65C0 4.22682 0.347727 2.87682 0.957275 1.67818L3.96409 4.01C4.67182 1.88273 6.65591 0.299545 9 0.299545C10.2109 0.299545 11.2418 0.618636 12.0477 1.15864L14.9564 -1.10045C13.4673 -2.475 11.43 -3.28091 9 -3.28091C5.48182 -3.28091 2.43818 -1.26409 0.957275 1.67818H3.96409Z"
-      fill="#FBBC05"
+      fill={Colors.googleYellow}
       transform="translate(0, 3.3218)"
     />
     <Path
       d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z"
-      fill="#EA4335"
+      fill={Colors.googleRed}
     />
   </Svg>
 );
@@ -46,6 +46,7 @@ export default function AuthScreen() {
         .catch((err) => console.error('Apple authentication availability check failed:', err));
     }
 
+    // Intentionally public for client-side OAuth
     const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
     const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
     if (!webClientId || !iosClientId) {
@@ -213,54 +214,63 @@ export default function AuthScreen() {
           </View>
 
           {/* Requires: Supabase dashboard -> Authentication -> Providers -> Email -> Enable */}
-          <View style={styles.emailForm}>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email address"
-              placeholderTextColor={Colors.textHint}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={styles.input}
-            />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor={Colors.textHint}
-              secureTextEntry={true}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleEmailAuth}
-              disabled={emailLoading}
-              activeOpacity={0.8}
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={64}
+            style={{ width: '100%' }}
+          >
+            <ScrollView
+              contentContainerStyle={styles.emailForm}
+              keyboardShouldPersistTaps="handled"
             >
-              {emailLoading ? (
-                <ActivityIndicator color={Colors.white} />
-              ) : (
-                <Text style={styles.primaryButtonText}>
-                  {authMode === 'signin' ? 'Sign in' : 'Create account'}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleTextMuted}>
-                {authMode === 'signin'
-                  ? "Don't have an account? "
-                  : "Already have an account? "}
-              </Text>
-              <TouchableOpacity onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}>
-                <Text style={styles.toggleTextAction}>
-                  {authMode === 'signin' ? 'Create one' : 'Sign in'}
-                </Text>
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email address"
+                placeholderTextColor={Colors.textHint}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+              />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Password"
+                placeholderTextColor={Colors.textHint}
+                secureTextEntry={true}
+                autoCapitalize="none"
+                style={styles.input}
+              />
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleEmailAuth}
+                disabled={emailLoading}
+                activeOpacity={0.8}
+              >
+                {emailLoading ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <Text style={styles.primaryButtonText}>
+                    {authMode === 'signin' ? 'Sign in' : 'Create account'}
+                  </Text>
+                )}
               </TouchableOpacity>
-            </View>
-          </View>
+
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleTextMuted}>
+                  {authMode === 'signin'
+                    ? "Don't have an account? "
+                    : "Already have an account? "}
+                </Text>
+                <TouchableOpacity onPress={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}>
+                  <Text style={styles.toggleTextAction}>
+                    {authMode === 'signin' ? 'Create one' : 'Sign in'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
 
         <Text style={styles.finePrint}>
@@ -284,7 +294,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: Spacing.xxxl,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -307,7 +317,7 @@ const styles = StyleSheet.create({
     fontWeight: '300', // sansLight mapping
     fontSize: FontSizes.md,
     color: Colors.textMuted,
-    marginTop: 10,
+    marginTop: Spacing.smLg,
   },
   buttonContainer: {
     width: '100%',
@@ -320,21 +330,21 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '100%',
-    height: 52,
+    height: Sizes.buttonHeight,
   },
   googleButton: {
     width: '100%',
-    height: 52,
+    height: Sizes.buttonHeight,
     backgroundColor: Colors.white,
     borderColor: Colors.border,
-    borderWidth: 1,
-    borderRadius: 14,
+    borderWidth: BorderWidths.sm,
+    borderRadius: Radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleIconContainer: {
-    marginRight: 10,
+    marginRight: Spacing.smLg,
   },
   googleButtonText: {
     fontFamily: Fonts.sansMedium,
@@ -351,10 +361,10 @@ const styles = StyleSheet.create({
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: Radius.lg,
     zIndex: 1,
   },
   finePrint: {
@@ -362,13 +372,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     textAlign: 'center',
-    marginTop: 16,
+    marginTop: Spacing.lg,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginVertical: 20,
+    gap: Spacing.md,
+    marginVertical: Spacing.xl,
   },
   dividerLine: {
     height: 1,
@@ -382,22 +392,22 @@ const styles = StyleSheet.create({
   },
   emailForm: {
     width: '100%',
-    gap: 12,
+    gap: Spacing.md,
   },
   input: {
     backgroundColor: Colors.cardBg,
-    borderWidth: 1.5,
+    borderWidth: BorderWidths.md,
     borderColor: Colors.inputBorder,
     borderRadius: Radius.pill,
     paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: Spacing.md,
     fontFamily: Fonts.sans,
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
   },
   primaryButton: {
     width: '100%',
-    padding: 16,
+    padding: Spacing.lg,
     borderRadius: Radius.pill,
     backgroundColor: Colors.primary,
     alignItems: 'center',
@@ -411,7 +421,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   toggleTextMuted: {
     fontFamily: Fonts.sans,

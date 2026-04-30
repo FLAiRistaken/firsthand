@@ -26,6 +26,11 @@ export const Colors = {
   success: '#34C759',
   black: '#000000',
   tabInactive: '#C8C4BE',
+  googleBlue: '#4285F4',
+  googleGreen: '#34A853',
+  googleYellow: '#FBBC05',
+  googleRed: '#EA4335',
+  overlay: 'rgba(0, 0, 0, 0.3)',
 }
 
 export const Fonts = {
@@ -50,11 +55,24 @@ export const FontSizes = {
 export const Spacing = {
   xs: 4,
   sm: 8,
+  smLg: 10,
   md: 12,
   lg: 16,
   xl: 20,
   xxl: 24,
+  xxxl: 48,
   screen: 22,
+}
+
+export const Sizes = {
+  buttonHeight: 52,
+  iconSm: 18,
+}
+
+export const BorderWidths = {
+  sm: 1,
+  md: 1.5,
+  lg: 2,
 }
 
 export const Radius = {
