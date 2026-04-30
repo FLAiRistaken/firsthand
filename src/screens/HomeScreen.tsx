@@ -94,9 +94,13 @@ export default function HomeScreen() {
         clearTimeout(timer);
         undoTimersRef.current.delete(entryId);
       }
-    } catch {
-      // Failure: keep the undo target and timer intact so user can retry
-      Alert.alert('Could not undo', 'The log could not be removed. Try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error && (err as any).code === 'EXPIRED') {
+        Alert.alert('Too late to undo', 'Logs can only be undone within 30 seconds.');
+      } else {
+        // Failure: keep the undo target and timer intact so user can retry
+        Alert.alert('Could not undo', 'The log could not be removed. Try again.');
+      }
     }
   };
 

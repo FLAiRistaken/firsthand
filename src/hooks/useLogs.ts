@@ -214,9 +214,14 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
 
     try {
       await dbSetLogCancelled(id, userId);
-    } catch {
+    } catch (err: unknown) {
       // Revert — re-fetch to restore correct state
       fetchLogs();
+      if (err instanceof Error && err.message.includes('Undo window expired')) {
+        const expiredError = new Error('Too late to undo');
+        (expiredError as any).code = 'EXPIRED';
+        throw expiredError;
+      }
       throw new Error('Failed to cancel log');
     }
   };
