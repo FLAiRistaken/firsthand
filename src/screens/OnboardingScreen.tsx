@@ -8,6 +8,7 @@ import { ONBOARDING_SYSTEM, ONBOARDING_COMPLETE_TOKEN, ONBOARDING_HINTS, CoachUs
 import { upsertProfile } from '../lib/db';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
+import { UserProfile } from '../lib/types';
 import { SendIcon } from '../components/icons/SendIcon';
 import { supabase } from '../lib/supabase';
 
@@ -58,7 +59,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { userId } = useAuth();
-  const { refreshProfile } = useProfile();
+  const { setProfile } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -158,22 +159,27 @@ export default function OnboardingScreen() {
       const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
       const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
-      // Step 3: Write profile directly with confirmed userId
-      await upsertProfile({
+      // Step 3: Build the complete profile object
+      const newProfile: UserProfile = {
         id: session.user.id,
-        name: profileRef.current.name,
-        occupation: profileRef.current.occupation || '',
+        name: profileRef.current.name ?? '',
+        occupation: profileRef.current.occupation ?? '',
         ai_tools_used: tools,
         primary_uses: uses,
-        goal: profileRef.current.goal || '',
-        success_definition: profileRef.current.success_definition || '',
+        goal: profileRef.current.goal ?? '',
+        success_definition: profileRef.current.success_definition ?? '',
         custom_categories: [],
         onboarded: true,
-      });
+        created_at: new Date().toISOString(),
+      };
 
-      // Step 4: Force ProfileContext to re-fetch so RootNavigator
-      // sees onboarded: true and transitions to App
-      await refreshProfile();
+      // Step 4: Write to DB directly
+      await upsertProfile(newProfile);
+
+      // Step 5: Set ProfileContext state directly — no waiting for React
+      // state propagation. RootNavigator immediately sees onboarded: true
+      // and routes to App.
+      setProfile(newProfile);
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';

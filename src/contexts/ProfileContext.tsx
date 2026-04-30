@@ -8,6 +8,7 @@ export interface ProfileContextValue {
   isLoading: boolean;
   updateProfile: (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  setProfile: (profile: UserProfile | null) => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
@@ -75,7 +76,7 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
   };
 
   return (
-    <ProfileContext.Provider value={{ profile, isLoading, updateProfile, refreshProfile: fetchProfile }}>
+    <ProfileContext.Provider value={{ profile, isLoading, updateProfile, refreshProfile: fetchProfile, setProfile }}>
       {children}
     </ProfileContext.Provider>
   );
