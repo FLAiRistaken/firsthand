@@ -113,7 +113,7 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }): Promise<void> => {
+  const handleSaveLog = async (entry: { type: 'win' | 'sin'; category: string; note: string; context?: LogContext }): Promise<void> => {
     try {
       const newLog = await addLog(entry);
       showUndoToast(newLog);

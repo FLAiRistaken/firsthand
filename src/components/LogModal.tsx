@@ -18,7 +18,7 @@ import { useProfile } from '../hooks/useProfile';
 interface LogModalProps {
   visible: boolean;
   type: 'win' | 'sin';
-  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context: LogContext | undefined }) => Promise<void>;
+  onSave: (entry: { type: 'win' | 'sin'; category: string; note: string; context?: LogContext }) => Promise<void>;
   onClose: () => void;
   customCategories: string[];
   onAddCategory: (category: string) => Promise<void>;
@@ -78,7 +78,7 @@ export const LogModal = ({
         type,
         category: selectedCategory,
         note: note.trim(),
-        context: selectedContext,
+        ...(selectedContext ? { context: selectedContext } : {}),
       });
       // Reset state
       setSelectedCategory('');
