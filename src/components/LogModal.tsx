@@ -62,7 +62,7 @@ export const LogModal = ({
   // Reset category/context when switching between win and sin.
   useEffect(() => {
     resetState();
-  }, [type]);
+  }, [type, profile?.default_context]);
 
   const isWin = type === 'win';
   const activeColor = isWin ? Colors.primary : Colors.amber;

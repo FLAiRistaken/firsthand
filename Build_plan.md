@@ -221,6 +221,7 @@ Do not build any of the following until explicitly added to the build plan:
 - ProfileContext silent sign-out removed (was incorrectly signing out new users)
 - `isCreatingAccount` flag added to ProfileContext
 - **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
+- **HF-04**: Profile rework PR fixes — icon paths, LogContext type, LogModal dep array, error handling — ✅ Merged
 
 ---
 

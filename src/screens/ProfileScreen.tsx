@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes, DEFAULT_CATEGORIES } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
+import { LogContext } from '../lib/types';
 import { Card } from '../components/Card';
 import { PillButton } from '../components/PillButton';
 import { PersonIcon } from '../components/icons/PersonIcon';
@@ -122,7 +123,13 @@ export default function ProfileScreen() {
               variant="primary"
               selected={true}
               label="Save profile"
-              onPress={() => updateProfile({ name: nameDraft.trim(), occupation: occupationDraft.trim() })}
+              onPress={async () => {
+                try {
+                  await updateProfile({ name: nameDraft.trim(), occupation: occupationDraft.trim() });
+                } catch (err) {
+                  Alert.alert('Error', 'Failed to save. Please try again.');
+                }
+              }}
             />
           </View>
         )}
@@ -153,7 +160,13 @@ export default function ProfileScreen() {
                 variant="primary"
                 selected={true}
                 label="Save goal"
-                onPress={() => updateProfile({ goal: goalDraft.trim() })}
+                onPress={async () => {
+                  try {
+                    await updateProfile({ goal: goalDraft.trim() });
+                  } catch (err) {
+                    Alert.alert('Error', 'Failed to save. Please try again.');
+                  }
+                }}
               />
             </View>
           )}
@@ -229,10 +242,14 @@ export default function ProfileScreen() {
                     {
                       text: 'Archive',
                       style: 'destructive',
-                      onPress: () => {
-                        updateProfile({
-                          custom_categories: (profile?.custom_categories ?? []).filter((c: string) => c !== cat)
-                        });
+                      onPress: async () => {
+                        try {
+                          await updateProfile({
+                            custom_categories: (profile?.custom_categories ?? []).filter((c: string) => c !== cat)
+                          });
+                        } catch (err) {
+                          Alert.alert('Error', 'Failed to save. Please try again.');
+                        }
                       }
                     }
                   ]
@@ -297,7 +314,13 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   key={option}
                   style={[styles.contextOptionBtn, isSelected && styles.contextOptionBtnSelected]}
-                  onPress={() => updateProfile({ default_context: val as 'work' | 'personal' | null })}
+                  onPress={async () => {
+                    try {
+                      await updateProfile({ default_context: val as LogContext | null });
+                    } catch (err) {
+                      Alert.alert('Error', 'Failed to save. Please try again.');
+                    }
+                  }}
                 >
                   <Text style={[styles.contextOptionText, isSelected && styles.contextOptionTextSelected]}>
                     {option}
