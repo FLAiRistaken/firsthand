@@ -19,6 +19,7 @@ import { callClaude } from '../lib/anthropic';
 import { COACH_SYSTEM, sanitizePromptValue } from '../lib/prompts';
 import { SendIcon } from '../components/icons/SendIcon';
 import { PersonIcon } from '../components/icons/PersonIcon';
+import { ArrowIcon } from '../components/icons/ArrowIcon';
 
 const COACH_PROMPTS = [
   "I used AI when I didn't need to",
@@ -85,7 +86,7 @@ export default function CoachScreen() {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages.length]);
 
-  async function send(textOverride?: string) {
+  async function send(textOverride?: string): Promise<void> {
     const content = (textOverride ?? input).trim();
     const userMsg = { role: 'user' as const, content };
     const nextLength = messages.length + 1;
@@ -170,18 +171,18 @@ export default function CoachScreen() {
               <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                  stroke="white"
+                  stroke={Colors.white}
                   strokeWidth="1.5"
                 />
                 <Path
                   d="M9 9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9C15 10.6569 13.6569 12 12 12V13"
-                  stroke="white"
+                  stroke={Colors.white}
                   strokeWidth="1.5"
                   strokeLinecap="round"
                 />
                 <Path
                   d="M12 17H12.01"
-                  stroke="white"
+                  stroke={Colors.white}
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
@@ -223,7 +224,7 @@ export default function CoachScreen() {
               {COACH_PROMPTS.map(p => (
                 <TouchableOpacity key={p} style={styles.quickPromptButton} onPress={() => send(p)}>
                   <Text style={styles.quickPromptText}>{p}</Text>
-                  <Text style={styles.quickPromptArrow}>→</Text>
+                  <ArrowIcon size={16} color={Colors.textHint} />
                 </TouchableOpacity>
               ))}
             </View>
