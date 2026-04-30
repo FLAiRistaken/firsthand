@@ -112,7 +112,8 @@ export default function CoachScreen() {
           goal: sanitizePromptValue(profile?.goal ?? ''),
           success_definition: sanitizePromptValue(profile?.success_definition ?? ''),
         }),
-        120
+        120,
+        'claude-haiku-4-5'
       );
       setMessages([
         ...updated,
