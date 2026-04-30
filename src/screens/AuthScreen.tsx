@@ -90,10 +90,9 @@ export default function AuthScreen() {
 
   const handleEmailAuth = async () => {
     const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
 
-    if (!trimmedEmail || !trimmedPassword) return;
-    if (trimmedPassword.length < 6) {
+    if (!trimmedEmail || !password) return;
+    if (password.length < 6) {
       Alert.alert('Password too short', 'Password must be at least 6 characters.');
       return;
     }
@@ -103,13 +102,13 @@ export default function AuthScreen() {
       if (authMode === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({
           email: trimmedEmail,
-          password: trimmedPassword,
+          password: password,
         });
         if (error) throw error;
       } else {
         const { error } = await supabase.auth.signUp({
           email: trimmedEmail,
-          password: trimmedPassword,
+          password: password,
         });
         if (error) throw error;
         Alert.alert(
