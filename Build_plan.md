@@ -108,7 +108,7 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.6 | Apple Developer account | 🔲 Pending | Required for real Apple Sign In + TestFlight |
 | 7.7 | Development build via EAS | 🔲 Pending | Removes Expo Go limitations, enables Google Sign In |
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
-| 7.9 | TestFlight build | 🔲 Pending | First real device test |
+| 7.9 | Note 200-char limit — LogModal + EditLogModal | ✅ Done | maxLength enforced, counter appears at 180 chars |
 | 7.10 | App Store submission | 🔲 Pending | |
 | 7.11 | First-launch tutorial | 🔲 Pending | 4-step overlay after onboarding transition — highlights Home buttons, History, Coach. Shown once, stored in AsyncStorage |
 | 7.12 | Dead code cleanup | ✅ Done | Removed non-existent `log.cancelled` filter from `getLogs` |
@@ -227,6 +227,7 @@ Do not build any of the following until explicitly added to the build plan:
 - **HF-01**: Model string updates (Sonnet 4.6, Haiku dated) — ✅ Merged
 - **HF-04**: Profile rework PR fixes — icon paths, LogContext type, LogModal dep array, error handling — ✅ Merged
 - **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
+- **HF-05**: Note 200-char enforcement — LogModal + EditLogModal — ✅ Merged
 
 ---
 

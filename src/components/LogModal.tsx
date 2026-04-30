@@ -222,14 +222,30 @@ export const LogModal = ({
               </View>
             </View>
 
-            <TextInput
-              style={styles.noteInput}
-              placeholder="Quick note… (optional)"
-              placeholderTextColor={Colors.textHint}
-              value={note}
-              onChangeText={setNote}
-              multiline
-            />
+            <View style={{ marginBottom: 18 }}>
+              <TextInput
+                style={[styles.noteInput, { marginBottom: 0 }]}
+                placeholder="Quick note… (optional)"
+                placeholderTextColor={Colors.textHint}
+                value={note}
+                onChangeText={setNote}
+                multiline
+                maxLength={200}
+              />
+              {note.length >= 180 && (
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans,
+                    fontSize: FontSizes.xs,
+                    color: note.length >= 200 ? Colors.amber : Colors.textHint,
+                    textAlign: 'right',
+                    marginTop: 4,
+                  }}
+                >
+                  {note.length}/200
+                </Text>
+              )}
+            </View>
 
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={loading}>

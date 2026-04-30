@@ -160,15 +160,30 @@ export const EditLogModal = ({
             </View>
 
             <Text style={styles.sectionTitle}>Note (optional)</Text>
-            <TextInput
-              style={[styles.input, { borderColor: Colors.inputBorder }]}
-              value={note}
-              onChangeText={setNote}
-              placeholder="What happened?"
-              placeholderTextColor={Colors.textHint}
-              multiline
-              maxLength={200}
-            />
+            <View style={{ marginBottom: 32 }}>
+              <TextInput
+                style={[styles.input, { borderColor: Colors.inputBorder, marginBottom: 0 }]}
+                value={note}
+                onChangeText={setNote}
+                placeholder="What happened?"
+                placeholderTextColor={Colors.textHint}
+                multiline
+                maxLength={200}
+              />
+              {note.length >= 180 && (
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans,
+                    fontSize: FontSizes.xs,
+                    color: note.length >= 200 ? Colors.amber : Colors.textHint,
+                    textAlign: 'right',
+                    marginTop: 4,
+                  }}
+                >
+                  {note.length}/200
+                </Text>
+              )}
+            </View>
 
             <View style={styles.footer}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
