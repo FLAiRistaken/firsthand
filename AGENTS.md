@@ -90,11 +90,9 @@ Colors.success       // #34C759 — green status indicator
 
 ### Typography
 ```typescript
-Fonts.serifRegular     // 'Fraunces_400Regular'
-Fonts.serifMedium      // 'Fraunces_500Medium'
+Fonts.serif            // 'Fraunces_400Regular'
 Fonts.serifSemiBold    // 'Fraunces_600SemiBold'
-Fonts.sansLight        // 'DMSans_300Light'
-Fonts.sansRegular      // 'DMSans_400Regular'
+Fonts.sans             // 'DMSans_400Regular'
 Fonts.sansMedium       // 'DMSans_500Medium'
 ```
 
