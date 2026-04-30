@@ -9,6 +9,8 @@ export interface ProfileContextValue {
   updateProfile: (updates: Partial<Omit<UserProfile, 'id' | 'created_at'>>) => Promise<void>;
   refreshProfile: () => Promise<void>;
   setProfile: (profile: UserProfile | null) => void;
+  isCreatingAccount: boolean;
+  setIsCreatingAccount: (value: boolean) => void;
 }
 
 const ProfileContext = createContext<ProfileContextValue | undefined>(undefined);
@@ -16,6 +18,7 @@ const ProfileContext = createContext<ProfileContextValue | undefined>(undefined)
 export function ProfileProvider({ userId, children }: { userId: string | null; children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isCreatingAccount, setIsCreatingAccount] = useState<boolean>(false);
 
   const fetchProfile = useCallback(async () => {
     if (!userId) {
@@ -76,7 +79,7 @@ export function ProfileProvider({ userId, children }: { userId: string | null; c
   };
 
   return (
-    <ProfileContext.Provider value={{ profile, isLoading, updateProfile, refreshProfile: fetchProfile, setProfile }}>
+    <ProfileContext.Provider value={{ profile, isLoading, updateProfile, refreshProfile: fetchProfile, setProfile, isCreatingAccount, setIsCreatingAccount }}>
       {children}
     </ProfileContext.Provider>
   );

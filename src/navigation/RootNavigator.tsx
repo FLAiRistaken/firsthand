@@ -18,9 +18,9 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigatorContent({ session, isLoading: authLoading }: { session: Session | null, isLoading: boolean }) {
-  const { profile, isLoading: profileLoading } = useProfileContext();
+  const { profile, isLoading: profileLoading, isCreatingAccount } = useProfileContext();
 
-  const isScreenLoading = authLoading || (!!session && profileLoading);
+  const isScreenLoading = authLoading || (!!session && profileLoading) || isCreatingAccount;
 
   if (isScreenLoading) {
     return (

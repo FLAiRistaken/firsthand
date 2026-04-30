@@ -59,7 +59,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { userId } = useAuth();
-  const { setProfile } = useProfile();
+  const { setProfile, setIsCreatingAccount } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -121,6 +121,7 @@ export default function OnboardingScreen() {
     }
 
     setAccountLoading(true);
+    setIsCreatingAccount(true);
     try {
       const { error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
@@ -185,6 +186,7 @@ export default function OnboardingScreen() {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       Alert.alert('Account creation failed', message);
     } finally {
+      setIsCreatingAccount(false);
       setAccountLoading(false);
     }
   };
