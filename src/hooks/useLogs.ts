@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LogEntry } from '../lib/types';
-import { getLogs, insertLog, updateLog, setLogCancelled as dbSetLogCancelled } from '../lib/db';
+import { getLogs, insertLog, updateLog, deleteLog as dbDeleteLog } from '../lib/db';
 
 const OFFLINE_QUEUE_KEY = 'firsthand_offline_queue';
 
@@ -264,7 +264,7 @@ export const useLogs = (userId: string | null): UseLogsReturn => {
     }
 
     try {
-      await dbSetLogCancelled(id, userId);
+      await dbDeleteLog(id, userId);
     } catch (err: unknown) {
       // Revert — re-fetch to restore correct state
       fetchLogs();
