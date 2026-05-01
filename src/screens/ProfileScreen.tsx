@@ -477,12 +477,26 @@ export default function ProfileScreen() {
                       return;
                     }
                     const time = profile?.notification_time ?? '20:00';
-                    await scheduleDaily(time);
+                    // Persist first, then schedule. If persist fails, no scheduling happens.
                     await updateProfile({ notifications_enabled: true });
+                    try {
+                      await scheduleDaily(time);
+                    } catch (scheduleError) {
+                      // Rollback: persist failed state and re-throw
+                      await updateProfile({ notifications_enabled: false });
+                      throw scheduleError;
+                    }
                   } else {
-                    setShowTimePicker(false);
-                    await cancelNotifications();
+                    // Persist first, then cancel. If persist fails, no cancellation happens.
                     await updateProfile({ notifications_enabled: false });
+                    try {
+                      setShowTimePicker(false);
+                      await cancelNotifications();
+                    } catch (cancelError) {
+                      // Rollback: persist previous state and re-throw
+                      await updateProfile({ notifications_enabled: true });
+                      throw cancelError;
+                    }
                   }
                 } catch (error: unknown) {
                   if (error instanceof Error) {

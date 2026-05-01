@@ -18,7 +18,18 @@ const NOTIFICATION_MESSAGES = [
 
 // Set notification display behavior
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
+  handleNotification: async (notification) => {
+    // Suppress the original reminder notification - only show the replacement
+    if (notification.request.content.data?.isReminder === true) {
+      return {
+        shouldShowAlert: false,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: false,
+        shouldShowList: false,
+      };
+    }
+    // For non-reminder notifications (including replacements), show normally
     return {
       shouldShowAlert: true,
       shouldPlaySound: false,
