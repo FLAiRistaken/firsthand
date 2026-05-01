@@ -134,11 +134,20 @@ app.post('/api/chat', (req, res) => {
   })
     .then(async (anthropicRes) => {
       clearTimeout(timeoutId);
-      const data = await anthropicRes.json();
-      if (!anthropicRes.ok) {
-        return res.status(anthropicRes.status).json(data);
+      let data;
+      let isJson = false;
+      try {
+        data = await anthropicRes.json();
+        isJson = true;
+      } catch (_) {
+        data = await anthropicRes.clone().text();
       }
-      return res.json(data);
+      if (!anthropicRes.ok) {
+        return isJson
+          ? res.status(anthropicRes.status).json(data)
+          : res.status(anthropicRes.status).type('text').send(data);
+      }
+      return isJson ? res.json(data) : res.type('text').send(data);
     })
     .catch((err) => {
       clearTimeout(timeoutId);
