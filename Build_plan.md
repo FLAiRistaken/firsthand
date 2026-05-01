@@ -233,6 +233,7 @@ Do not build any of the following until explicitly added to the build plan:
 - **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
 - **HF-05**: Note 200-char enforcement — LogModal + EditLogModal — ✅ Merged
 - **HF-06**: develop→main PR fixes — theme tokens, ErrorBoundary on Profile, model param fix — ✅ Merged
+- **HF-07**: Fix CI type check — exportUserData/deleteUserAccount imports + expo-file-system legacy API — ✅ Merged
 
 ---
 
