@@ -107,7 +107,17 @@ app.post('/api/delete-account', async (req, res) => {
     }
 
     if (!verifyResponse.ok) {
-      return res.status(401).json({ error: 'Invalid access token' });
+      const verifyStatus = verifyResponse.status;
+      if (verifyStatus === 401) {
+        return res.status(401).json({ error: 'Invalid access token' });
+      }
+      if (verifyStatus === 403) {
+        return res.status(403).json({ error: 'Access token does not have permission' });
+      }
+      // Rate-limit, server error, or other upstream failure — don't expose as 401
+      const verifyBody = await verifyResponse.text();
+      console.error(`Upstream auth service error (HTTP ${verifyStatus}):`, verifyBody);
+      return res.status(502).json({ error: 'Upstream authentication service error' });
     }
 
     const userData = await verifyResponse.json();
@@ -186,11 +196,15 @@ app.post('/api/delete-account', async (req, res) => {
       console.error(`Giving up on deleting ${label} after ${maxAttempts} attempts — orphaned rows may need manual cleanup.`);
     };
 
-    // Delete logs then profile (cascade should handle logs, but explicit is safer)
-    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, 'logs');
-    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, 'profile');
+    // Respond immediately — the client's token is now invalid and we don't want
+    // to block on retries. DB cleanup runs in the background.
+    res.json({ success: true });
 
-    return res.json({ success: true });
+    // Delete logs then profile best-effort in the background (fire-and-forget).
+    // These are intentionally NOT awaited so the response is already sent above.
+    bestEffortDelete(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, 'logs')
+      .then(() => bestEffortDelete(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, 'profile'))
+      .catch((err) => console.error('Unexpected error in background DB cleanup:', err));
   } catch (err) {
     console.error('Error deleting user account:', err);
     return res.status(500).json({ error: 'Internal server error' });
