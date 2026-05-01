@@ -28,6 +28,7 @@ export default function HistoryScreen() {
   const { profile } = useProfile();
 
   const [filter, setFilter] = useState<FilterType>('all');
+  const [view, setView] = useState<'log' | 'patterns'>('log');
 
   // Helper to get today and yesterday date keys
   const getTodayKey = () => new Date().toISOString().slice(0, 10);
@@ -78,6 +79,50 @@ export default function HistoryScreen() {
     return grouped;
   }, [logs]);
 
+
+  const patternData = useMemo(() => {
+    // Hour buckets 0-23
+    const hours = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      wins: 0,
+      sins: 0,
+    }));
+
+    logs.forEach(log => {
+      const hour = new Date(log.timestamp).getHours();
+      if (log.type === 'win') hours[hour].wins++;
+      else hours[hour].sins++;
+    });
+
+    // Day of week buckets Mon=0 to Sun=6
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
+      (label, i) => ({ label, index: i, wins: 0, sins: 0 })
+    );
+
+    logs.forEach(log => {
+      const dayIndex = (new Date(log.timestamp).getDay() + 6) % 7;
+      if (log.type === 'win') days[dayIndex].wins++;
+      else days[dayIndex].sins++;
+    });
+
+    // Category breakdown
+    const categoryMap: Record<string, { wins: number; sins: number }> = {};
+    logs.forEach(log => {
+      if (!categoryMap[log.category]) {
+        categoryMap[log.category] = { wins: 0, sins: 0 };
+      }
+      if (log.type === 'win') categoryMap[log.category].wins++;
+      else categoryMap[log.category].sins++;
+    });
+
+    const categories = Object.entries(categoryMap)
+      .map(([name, counts]) => ({ name, ...counts, total: counts.wins + counts.sins }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+
+    return { hours, days, categories };
+  }, [logs]);
+
   const handleSave = async (id: string, updates: Parameters<typeof editLog>[1]): Promise<void> => {
     await editLog(id, updates);
     setEditingLog(null);
@@ -126,6 +171,23 @@ export default function HistoryScreen() {
 
         <View style={styles.titleRow}>
           <Text style={styles.title}>History</Text>
+          <View style={styles.viewToggleRow}>
+            <TouchableOpacity
+              style={[styles.viewToggleTab, view === 'log' && styles.viewToggleTabSelected]}
+              onPress={() => setView('log')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.viewToggleTabText, view === 'log' && styles.viewToggleTabSelectedText]}>Log</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.viewToggleTab, view === 'patterns' && styles.viewToggleTabSelected]}
+              onPress={() => setView('patterns')}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.viewToggleTabText, view === 'patterns' && styles.viewToggleTabSelectedText]}>Patterns</Text>
+            </TouchableOpacity>
+          </View>
+          {view === 'log' && (
           <View style={styles.filterRow}>
             {(['all', 'wins', 'AI uses'] as FilterType[]).map(f => (
               <PillButton
@@ -137,6 +199,7 @@ export default function HistoryScreen() {
               />
             ))}
           </View>
+          )}
         </View>
       </View>
 
@@ -145,7 +208,129 @@ export default function HistoryScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {Object.entries(groupedLogs).map(([dateKey, { logs: entries, label }]) => {
+        {view === 'patterns' ? (
+          <View style={styles.patternsContainer}>
+            {/* Time of Day Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>TIME OF DAY</Text>
+              <Text style={styles.cardSubtitle}>When you log wins and AI uses</Text>
+
+              {Math.max(...patternData.hours.map(h => h.wins + h.sins)) === 0 ? (
+                <Text style={styles.noDataText}>No data yet</Text>
+              ) : (
+                <View>
+                  <View style={styles.chartContainer}>
+                    {patternData.hours.map(h => {
+                      const maxScale = Math.max(...patternData.hours.map(hr => hr.wins + hr.sins));
+                      const winHeight = maxScale > 0 ? (h.wins / maxScale) * 60 : 0;
+                      const sinHeight = maxScale > 0 ? (h.sins / maxScale) * 60 : 0;
+
+                      return (
+                        <View key={h.hour} style={styles.column}>
+                          {h.sins > 0 && (
+                            <View style={[styles.sinBar, { height: sinHeight }]} />
+                          )}
+                          {h.wins > 0 && (
+                            <View style={[styles.winBar, { height: winHeight, marginTop: h.sins > 0 ? 1 : 0 }]} />
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <View style={styles.xAxisLabels}>
+                    {['12a', '4a', '8a', '12p', '4p', '8p'].map((label, i) => (
+                      <Text key={i} style={styles.xAxisLabelText}>{label}</Text>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.legendRow}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
+                  <Text style={styles.legendText}>Wins</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: Colors.amber }]} />
+                  <Text style={styles.legendText}>AI uses</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Day of Week Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>DAY OF WEEK</Text>
+              <Text style={styles.cardSubtitle}>Your pattern across the week</Text>
+
+              {Math.max(...patternData.days.map(d => d.wins + d.sins)) === 0 ? (
+                <Text style={styles.noDataText}>No data yet</Text>
+              ) : (
+                <View>
+                  <View style={styles.daysChartContainer}>
+                    {patternData.days.map(d => {
+                      const maxScale = Math.max(...patternData.days.map(day => day.wins + day.sins));
+                      const winHeight = maxScale > 0 ? (d.wins / maxScale) * 60 : 0;
+                      const sinHeight = maxScale > 0 ? (d.sins / maxScale) * 60 : 0;
+
+                      return (
+                        <View key={d.label} style={styles.dayColumn}>
+                          <View style={styles.dayBarsWrap}>
+                            {d.sins > 0 && (
+                              <View style={[styles.sinBar, { height: sinHeight }]} />
+                            )}
+                            {d.wins > 0 && (
+                              <View style={[styles.winBar, { height: winHeight, marginTop: d.sins > 0 ? 1 : 0 }]} />
+                            )}
+                          </View>
+                          <Text style={styles.dayLabelText}>{d.label}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <View style={styles.legendRow}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
+                      <Text style={styles.legendText}>Wins</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: Colors.amber }]} />
+                      <Text style={styles.legendText}>AI uses</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Top Categories Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>TOP CATEGORIES</Text>
+              <Text style={styles.cardSubtitle}>Where your effort goes</Text>
+
+              {patternData.categories.length === 0 ? (
+                <Text style={styles.noDataText}>No data yet</Text>
+              ) : (
+                patternData.categories.map(c => (
+                  <View key={c.name} style={styles.categoryRow}>
+                    <Text style={styles.categoryName} numberOfLines={1}>{c.name}</Text>
+                    <View style={styles.categoryTrack}>
+                      <View style={{ flex: 1, flexDirection: 'row' }}>
+                        {c.wins > 0 && (
+                          <View style={[styles.categoryWinFill, { flex: c.wins }]} />
+                        )}
+                        {c.sins > 0 && (
+                          <View style={[styles.categorySinFill, { flex: c.sins }]} />
+                        )}
+                      </View>
+                    </View>
+                    <Text style={styles.categoryTotal}>{c.total}</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          </View>
+        ) : (
+        Object.entries(groupedLogs).map(([dateKey, { logs: entries, label }]) => {
           const wCount = entries.filter((e: LogEntry) => e.type === 'win').length;
           const sCount = entries.filter((e: LogEntry) => e.type === 'sin').length;
           const total = wCount + sCount;
@@ -275,7 +460,8 @@ export default function HistoryScreen() {
               )}
             </View>
           );
-        })}
+        })
+        )}
         <View style={styles.spacer20} />
       </ScrollView>
 
@@ -350,6 +536,32 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xxl,
     color: Colors.textPrimary,
     marginBottom: 12,
+  },
+  viewToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  viewToggleTab: {
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: 'transparent',
+  },
+  viewToggleTabSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  viewToggleTabText: {
+    color: Colors.textSecondary,
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.base,
+  },
+  viewToggleTabSelectedText: {
+    color: Colors.white,
+    fontFamily: Fonts.sansMedium,
   },
   filterRow: {
     flexDirection: 'row',
@@ -496,5 +708,144 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textHint,
     flexShrink: 0,
+  },
+  patternsContainer: {
+    gap: 16,
+    paddingTop: 0,
+  },
+  card: {
+    padding: 16,
+    backgroundColor: Colors.cardBg,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  cardLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.xs,
+    color: Colors.primary,
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+    marginBottom: 16,
+  },
+  noDataText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.base,
+    color: Colors.textHint,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    height: 80,
+    gap: 2,
+  },
+  column: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  winBar: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+    maxHeight: 60,
+    minHeight: 0,
+  },
+  sinBar: {
+    width: '100%',
+    backgroundColor: Colors.amber,
+    borderRadius: 2,
+  },
+  xAxisLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  xAxisLabelText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: Radius.full,
+  },
+  legendText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textMuted,
+  },
+  daysChartContainer: {
+    flexDirection: 'row',
+    height: 80,
+    gap: 4,
+  },
+  dayColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  dayBarsWrap: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'flex-end',
+  },
+  dayLabelText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
+    marginTop: 4,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  categoryName: {
+    width: 72,
+    flexShrink: 0,
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.sm,
+    color: Colors.textPrimary,
+  },
+  categoryTrack: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.border,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  categoryWinFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+  },
+  categorySinFill: {
+    height: '100%',
+    backgroundColor: Colors.amber,
+  },
+  categoryTotal: {
+    width: 28,
+    textAlign: 'right',
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
   },
 });
