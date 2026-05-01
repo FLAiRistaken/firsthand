@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Fonts, FontSizes, Radius, Spacing } from '../constants/theme';
+import { BorderWidths, Colors, Fonts, FontSizes, LetterSpacing, Radius, Sizes, Spacing } from '../constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/AppNavigator';
@@ -220,22 +220,24 @@ export default function HistoryScreen() {
               ) : (
                 <View>
                   <View style={styles.chartContainer}>
-                    {patternData.hours.map(h => {
+                    {(() => {
                       const maxScale = Math.max(...patternData.hours.map(hr => hr.wins + hr.sins));
-                      const winHeight = maxScale > 0 ? (h.wins / maxScale) * 60 : 0;
-                      const sinHeight = maxScale > 0 ? (h.sins / maxScale) * 60 : 0;
+                      return patternData.hours.map(h => {
+                        const winHeight = maxScale > 0 ? (h.wins / maxScale) * 60 : 0;
+                        const sinHeight = maxScale > 0 ? (h.sins / maxScale) * 60 : 0;
 
-                      return (
-                        <View key={h.hour} style={styles.column}>
-                          {h.sins > 0 && (
-                            <View style={[styles.sinBar, { height: sinHeight }]} />
-                          )}
-                          {h.wins > 0 && (
-                            <View style={[styles.winBar, { height: winHeight, marginTop: h.sins > 0 ? 1 : 0 }]} />
-                          )}
-                        </View>
-                      );
-                    })}
+                        return (
+                          <View key={h.hour} style={styles.column}>
+                            {h.sins > 0 && (
+                              <View style={[styles.sinBar, { height: sinHeight }]} />
+                            )}
+                            {h.wins > 0 && (
+                              <View style={[styles.winBar, { height: winHeight, marginTop: h.sins > 0 ? 1 : 0 }]} />
+                            )}
+                          </View>
+                        );
+                      });
+                    })()}
                   </View>
                   <View style={styles.xAxisLabels}>
                     {['12a', '4a', '8a', '12p', '4p', '8p'].map((label, i) => (
@@ -247,11 +249,11 @@ export default function HistoryScreen() {
 
               <View style={styles.legendRow}>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
+                  <View style={[styles.legendDot, styles.legendDotPrimary]} />
                   <Text style={styles.legendText}>Wins</Text>
                 </View>
                 <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: Colors.amber }]} />
+                  <View style={[styles.legendDot, styles.legendDotAmber]} />
                   <Text style={styles.legendText}>AI uses</Text>
                 </View>
               </View>
@@ -267,34 +269,36 @@ export default function HistoryScreen() {
               ) : (
                 <View>
                   <View style={styles.daysChartContainer}>
-                    {patternData.days.map(d => {
+                    {(() => {
                       const maxScale = Math.max(...patternData.days.map(day => day.wins + day.sins));
-                      const winHeight = maxScale > 0 ? (d.wins / maxScale) * 60 : 0;
-                      const sinHeight = maxScale > 0 ? (d.sins / maxScale) * 60 : 0;
+                      return patternData.days.map(d => {
+                        const winHeight = maxScale > 0 ? (d.wins / maxScale) * 60 : 0;
+                        const sinHeight = maxScale > 0 ? (d.sins / maxScale) * 60 : 0;
 
-                      return (
-                        <View key={d.label} style={styles.dayColumn}>
-                          <View style={styles.dayBarsWrap}>
-                            {d.sins > 0 && (
-                              <View style={[styles.sinBar, { height: sinHeight }]} />
-                            )}
-                            {d.wins > 0 && (
-                              <View style={[styles.winBar, { height: winHeight, marginTop: d.sins > 0 ? 1 : 0 }]} />
-                            )}
+                        return (
+                          <View key={d.label} style={styles.dayColumn}>
+                            <View style={styles.dayBarsWrap}>
+                              {d.sins > 0 && (
+                                <View style={[styles.sinBar, { height: sinHeight }]} />
+                              )}
+                              {d.wins > 0 && (
+                                <View style={[styles.winBar, { height: winHeight, marginTop: d.sins > 0 ? 1 : 0 }]} />
+                              )}
+                            </View>
+                            <Text style={styles.dayLabelText}>{d.label}</Text>
                           </View>
-                          <Text style={styles.dayLabelText}>{d.label}</Text>
-                        </View>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </View>
 
                   <View style={styles.legendRow}>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
+                      <View style={[styles.legendDot, styles.legendDotPrimary]} />
                       <Text style={styles.legendText}>Wins</Text>
                     </View>
                     <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: Colors.amber }]} />
+                      <View style={[styles.legendDot, styles.legendDotAmber]} />
                       <Text style={styles.legendText}>AI uses</Text>
                     </View>
                   </View>
@@ -314,7 +318,7 @@ export default function HistoryScreen() {
                   <View key={c.name} style={styles.categoryRow}>
                     <Text style={styles.categoryName} numberOfLines={1}>{c.name}</Text>
                     <View style={styles.categoryTrack}>
-                      <View style={{ flex: 1, flexDirection: 'row' }}>
+                      <View style={styles.rowFlex}>
                         {c.wins > 0 && (
                           <View style={[styles.categoryWinFill, { flex: c.wins }]} />
                         )}
@@ -539,16 +543,16 @@ const styles = StyleSheet.create({
   },
   viewToggleRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   viewToggleTab: {
-    paddingVertical: 7,
-    paddingHorizontal: 16,
+    paddingVertical: Spacing.tabPaddingVertical,
+    paddingHorizontal: Spacing.lg,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.transparent,
   },
   viewToggleTabSelected: {
     backgroundColor: Colors.primary,
@@ -710,41 +714,41 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   patternsContainer: {
-    gap: 16,
+    gap: Spacing.lg,
     paddingTop: 0,
   },
   card: {
-    padding: 16,
+    padding: Spacing.lg,
     backgroundColor: Colors.cardBg,
     borderRadius: Radius.lg,
-    borderWidth: 1,
+    borderWidth: BorderWidths.sm,
     borderColor: Colors.border,
   },
   cardLabel: {
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.xs,
     color: Colors.primary,
-    letterSpacing: 0.8,
-    marginBottom: 4,
+    letterSpacing: LetterSpacing.cardLabel,
+    marginBottom: Spacing.xs,
   },
   cardSubtitle: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textMuted,
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
   },
   noDataText: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.base,
     color: Colors.textHint,
     textAlign: 'center',
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
   },
   chartContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: 80,
-    gap: 2,
+    height: Sizes.chartHeight,
+    gap: Spacing.xxs,
   },
   column: {
     flex: 1,
@@ -754,19 +758,19 @@ const styles = StyleSheet.create({
   winBar: {
     width: '100%',
     backgroundColor: Colors.primary,
-    borderRadius: 2,
+    borderRadius: Radius.xs,
     maxHeight: 60,
     minHeight: 0,
   },
   sinBar: {
     width: '100%',
     backgroundColor: Colors.amber,
-    borderRadius: 2,
+    borderRadius: Radius.xs,
   },
   xAxisLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
+    marginTop: Spacing.xsMd,
   },
   xAxisLabelText: {
     fontFamily: Fonts.sans,
@@ -775,28 +779,38 @@ const styles = StyleSheet.create({
   },
   legendRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 12,
+    gap: Spacing.lg,
+    marginTop: Spacing.md,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.xsMd,
   },
   legendDot: {
-    width: 8,
-    height: 8,
+    width: Sizes.dotSize,
+    height: Sizes.dotSize,
     borderRadius: Radius.full,
+  },
+  legendDotPrimary: {
+    backgroundColor: Colors.primary,
+  },
+  legendDotAmber: {
+    backgroundColor: Colors.amber,
   },
   legendText: {
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textMuted,
   },
+  rowFlex: {
+    flex: 1,
+    flexDirection: 'row',
+  },
   daysChartContainer: {
     flexDirection: 'row',
-    height: 80,
-    gap: 4,
+    height: Sizes.chartHeight,
+    gap: Spacing.xs,
   },
   dayColumn: {
     flex: 1,
@@ -811,16 +825,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
+    gap: Spacing.smLg,
+    marginBottom: Spacing.smLg,
   },
   categoryName: {
-    width: 72,
+    width: Sizes.categoryNameWidth,
     flexShrink: 0,
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.sm,
@@ -828,7 +842,7 @@ const styles = StyleSheet.create({
   },
   categoryTrack: {
     flex: 1,
-    height: 8,
+    height: Sizes.categoryTrackHeight,
     backgroundColor: Colors.border,
     borderRadius: Radius.full,
     overflow: 'hidden',
@@ -842,7 +856,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.amber,
   },
   categoryTotal: {
-    width: 28,
+    width: Sizes.categoryTotalWidth,
     textAlign: 'right',
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
