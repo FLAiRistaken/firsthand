@@ -36,6 +36,7 @@ export const Colors = {
   googleYellow: '#FBBC05',
   googleRed: '#EA4335',
   overlay: 'rgba(0, 0, 0, 0.3)',
+  transparent: 'transparent',
 }
 
 export const Fonts = {
@@ -58,7 +59,9 @@ export const FontSizes = {
 }
 
 export const Spacing = {
+  xxs: 2,
   xs: 4,
+  xsMd: 6,
   sm: 8,
   smLg: 10,
   md: 12,
@@ -67,12 +70,18 @@ export const Spacing = {
   xxl: 24,
   xxxl: 48,
   screen: 22,
+  tabPaddingVertical: 7,
 }
 
 export const Sizes = {
   buttonHeight: 52,
   iconSm: 18,
   avatar: 72,
+  chartHeight: 80,
+  categoryNameWidth: 72,
+  categoryTotalWidth: 28,
+  dotSize: 8,
+  categoryTrackHeight: 8,
 }
 
 export const BorderWidths = {
@@ -82,6 +91,7 @@ export const BorderWidths = {
 }
 
 export const Radius = {
+  xs: 2,
   sm: 8,
   md: 12,
   lg: 14,
@@ -89,6 +99,10 @@ export const Radius = {
   xxl: 22,
   pill: 20,
   full: 9999,
+}
+
+export const LetterSpacing = {
+  cardLabel: 0.8,
 }
 
 export const DEFAULT_CATEGORIES = [
