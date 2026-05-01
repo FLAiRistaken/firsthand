@@ -13,12 +13,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Paths, File } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes, DEFAULT_CATEGORIES } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
-import { exportUserData, deleteUserAccount } from '../lib/db';
+
 import { LogContext } from '../lib/types';
+import { deleteUserAccount, exportUserData } from '../lib/db';
 import { Card } from '../components/Card';
 import { PillButton } from '../components/PillButton';
 import { PersonIcon } from '../components/icons/PersonIcon';
