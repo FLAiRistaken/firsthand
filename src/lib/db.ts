@@ -118,22 +118,37 @@ export const deleteUserAccount = async (userId: string): Promise<void> => {
   }
 
   // Call server endpoint to delete user account using service role
-  const response = await fetch(`${proxyUrl}/api/delete-account`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-proxy-secret': proxySecret,
-    },
-    body: JSON.stringify({
-      userId,
-      accessToken: session.access_token,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    console.error('Error deleting account:', errorData);
-    throw new Error(errorData.error || 'Failed to delete account');
+  try {
+    const response = await fetch(`${proxyUrl}/api/delete-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-proxy-secret': proxySecret,
+      },
+      body: JSON.stringify({
+        userId,
+        accessToken: session.access_token,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Error deleting account:', errorData);
+      throw new Error(errorData.error || 'Failed to delete account');
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      console.error('Timeout deleting account');
+      throw new Error('Request timeout deleting account');
+    }
+    throw err;
   }
 
   // Sign out after successful deletion
@@ -146,7 +161,7 @@ export const deleteUserAccount = async (userId: string): Promise<void> => {
 };
 
 // Helper function to escape CSV values
-const csvEscape = (value: any): string => {
+const csvEscape = (value: unknown): string => {
   if (value === undefined || value === null) {
     return '""';
   }

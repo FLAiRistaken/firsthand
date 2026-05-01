@@ -38,7 +38,7 @@ export default function ProfileScreen() {
 
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const handleExport = async () => {
+  const handleExport = async (): Promise<void> => {
     if (!userId) return;
     let tempFileUri: string | null = null;
     try {
@@ -68,12 +68,20 @@ export default function ProfileScreen() {
               await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
             }
           }
-        } catch (cleanupErr) {
-          console.error('Error cleaning up temp file:', cleanupErr);
+        } catch (cleanupErr: unknown) {
+          if (cleanupErr instanceof Error) {
+            console.error('Error cleaning up temp file:', cleanupErr.message);
+          } else {
+            console.error('Error cleaning up temp file:', String(cleanupErr));
+          }
         }
       }, 5000);
-    } catch (err) {
-      console.error('Export error:', err);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Export error:', error.message);
+      } else {
+        console.error('Export error:', String(error));
+      }
       Alert.alert('Error', 'Failed to export data. Please try again.');
 
       // Clean up temp file on error
@@ -83,8 +91,12 @@ export default function ProfileScreen() {
           if (fileInfo.exists) {
             await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
           }
-        } catch (cleanupErr) {
-          console.error('Error cleaning up temp file on error:', cleanupErr);
+        } catch (cleanupErr: unknown) {
+          if (cleanupErr instanceof Error) {
+            console.error('Error cleaning up temp file on error:', cleanupErr.message);
+          } else {
+            console.error('Error cleaning up temp file on error:', String(cleanupErr));
+          }
         }
       }
     } finally {

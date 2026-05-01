@@ -67,6 +67,11 @@ app.post('/api/delete-account', async (req, res) => {
     return res.status(401).json({ error: 'Unauthorised' });
   }
 
+  // Validate req.body is a non-null plain object
+  if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'invalid request body' });
+  }
+
   const { userId, accessToken } = req.body;
 
   if (!userId || typeof userId !== 'string' || userId.trim() === '') {
@@ -79,12 +84,27 @@ app.post('/api/delete-account', async (req, res) => {
 
   try {
     // Verify the user's access token matches the userId they're trying to delete
-    const verifyResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
+    const verifyController = new AbortController();
+    const verifyTimeoutId = setTimeout(() => verifyController.abort(), 10000);
+
+    let verifyResponse;
+    try {
+      verifyResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        },
+        signal: verifyController.signal,
+      });
+      clearTimeout(verifyTimeoutId);
+    } catch (verifyErr) {
+      clearTimeout(verifyTimeoutId);
+      if (verifyErr.name === 'AbortError') {
+        console.error('Timeout verifying user token');
+        return res.status(504).json({ error: 'Request timeout verifying token' });
+      }
+      throw verifyErr;
+    }
 
     if (!verifyResponse.ok) {
       return res.status(401).json({ error: 'Invalid access token' });
@@ -97,14 +117,29 @@ app.post('/api/delete-account', async (req, res) => {
     }
 
     // Delete logs (cascade should handle this, but explicit delete for safety)
-    const deleteLogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Prefer': 'return=minimal',
-      },
-    });
+    const deleteLogsController = new AbortController();
+    const deleteLogsTimeoutId = setTimeout(() => deleteLogsController.abort(), 10000);
+
+    let deleteLogsResponse;
+    try {
+      deleteLogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          'Prefer': 'return=minimal',
+        },
+        signal: deleteLogsController.signal,
+      });
+      clearTimeout(deleteLogsTimeoutId);
+    } catch (deleteLogsErr) {
+      clearTimeout(deleteLogsTimeoutId);
+      if (deleteLogsErr.name === 'AbortError') {
+        console.error('Timeout deleting user logs');
+        return res.status(504).json({ error: 'Request timeout deleting logs' });
+      }
+      throw deleteLogsErr;
+    }
 
     if (!deleteLogsResponse.ok) {
       console.error('Failed to delete logs:', await deleteLogsResponse.text());
@@ -112,14 +147,29 @@ app.post('/api/delete-account', async (req, res) => {
     }
 
     // Delete profile
-    const deleteProfileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Prefer': 'return=minimal',
-      },
-    });
+    const deleteProfileController = new AbortController();
+    const deleteProfileTimeoutId = setTimeout(() => deleteProfileController.abort(), 10000);
+
+    let deleteProfileResponse;
+    try {
+      deleteProfileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          'Prefer': 'return=minimal',
+        },
+        signal: deleteProfileController.signal,
+      });
+      clearTimeout(deleteProfileTimeoutId);
+    } catch (deleteProfileErr) {
+      clearTimeout(deleteProfileTimeoutId);
+      if (deleteProfileErr.name === 'AbortError') {
+        console.error('Timeout deleting user profile');
+        return res.status(504).json({ error: 'Request timeout deleting profile' });
+      }
+      throw deleteProfileErr;
+    }
 
     if (!deleteProfileResponse.ok) {
       console.error('Failed to delete profile:', await deleteProfileResponse.text());
@@ -127,13 +177,28 @@ app.post('/api/delete-account', async (req, res) => {
     }
 
     // Delete the auth user using admin API
-    const deleteUserResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
+    const deleteUserController = new AbortController();
+    const deleteUserTimeoutId = setTimeout(() => deleteUserController.abort(), 10000);
+
+    let deleteUserResponse;
+    try {
+      deleteUserResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        },
+        signal: deleteUserController.signal,
+      });
+      clearTimeout(deleteUserTimeoutId);
+    } catch (deleteUserErr) {
+      clearTimeout(deleteUserTimeoutId);
+      if (deleteUserErr.name === 'AbortError') {
+        console.error('Timeout deleting auth user');
+        return res.status(504).json({ error: 'Request timeout deleting user' });
+      }
+      throw deleteUserErr;
+    }
 
     if (!deleteUserResponse.ok) {
       const errorText = await deleteUserResponse.text();
