@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/AppNavigator';
@@ -18,9 +18,11 @@ import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths } from '../constants/theme';
+import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { useLogs } from '../hooks/useLogs';
 import { callClaude } from '../lib/anthropic';
-import { COACH_SYSTEM, sanitizePromptValue } from '../lib/prompts';
+import { COACH_SYSTEM, sanitizePromptValue, RecentLogSummary } from '../lib/prompts';
 import { SendIcon } from '../components/icons/SendIcon';
 import { PersonIcon } from '../components/icons/PersonIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -38,6 +40,8 @@ const MAX_MESSAGES = 20;
 export default function CoachScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { profile } = useProfile();
+  const { userId } = useAuth();
+  const { logs } = useLogs(userId ?? null);
   const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -45,6 +49,21 @@ export default function CoachScreen() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const recentLogs = useMemo((): RecentLogSummary[] => {
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    return logs
+      .filter(log => new Date(log.timestamp) >= threeDaysAgo)
+      .slice(0, 20)
+      .map(log => ({
+        type: log.type,
+        category: log.category,
+        context: log.context ?? undefined,
+        note: log.note ? sanitizePromptValue(log.note, 100) : undefined,
+        timestamp: log.timestamp,
+      }));
+  }, [logs]);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -112,6 +131,7 @@ export default function CoachScreen() {
           occupation: sanitizePromptValue(profile?.occupation ?? ''),
           goal: sanitizePromptValue(profile?.goal ?? ''),
           success_definition: sanitizePromptValue(profile?.success_definition ?? ''),
+          recentLogs,
         }),
         120,
         'claude-haiku-4-5-20251001'

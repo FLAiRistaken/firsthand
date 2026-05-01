@@ -220,6 +220,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 18 | Error boundaries — all main screens | ✅ Merged |
 | 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
 | 21 | Anthropic proxy client — calls DO proxy instead of Anthropic directly | ✅ Merged |
+| 23 | Coach context on recent logs | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)

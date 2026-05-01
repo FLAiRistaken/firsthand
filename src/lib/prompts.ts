@@ -14,11 +14,20 @@ Sequence:
 
 After their final answer, write a warm 2-sentence personalised reflection using what they shared — make it feel like you actually listened. Then end with exactly: ${ONBOARDING_COMPLETE_TOKEN}`;
 
+export interface RecentLogSummary {
+  type: 'win' | 'sin';
+  category: string;
+  context?: string;
+  note?: string;
+  timestamp: string;
+}
+
 export type CoachUserProfile = {
   name: string;
   occupation?: string | null;
   goal?: string | null;
   success_definition?: string | null;
+  recentLogs?: RecentLogSummary[];
 };
 
 export const sanitizePromptValue = (value: string, maxLength = 100): string => {
@@ -51,7 +60,25 @@ export const COACH_SYSTEM = (user: string | CoachUserProfile): string => {
     .filter(Boolean)
     .join(' ');
 
-  return `You are a warm Socratic coach inside Firsthand — an app helping people be more intentional about AI use and rebuild their own thinking. ${personalisation}
+  const recentLogsSection = profile.recentLogs && profile.recentLogs.length > 0
+    ? `
+
+RECENT ACTIVITY (last 3 days):
+${profile.recentLogs.map(log => {
+  const date = new Date(log.timestamp).toLocaleDateString('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
+  const type = log.type === 'win' ? 'Did it themselves' : 'Used AI';
+  const context = log.context ? ` (${log.context})` : '';
+  const note = log.note ? ` — "${sanitizePromptValue(log.note, 100)}"` : '';
+  return `- ${date}: ${type} · ${log.category}${context}${note}`;
+}).join('\n')}
+
+Use this recent activity naturally in conversation when relevant. Don't recite the list back — use it to ask more informed questions.`
+    : '';
+
+  return `You are a warm Socratic coach inside Firsthand — an app helping people be more intentional about AI use and rebuild their own thinking. ${personalisation}${recentLogsSection}
 Your ONLY role: ask one short thoughtful question per turn. Never give advice. Never suggest solutions. Never tell them what to do. Warm and human. One question per message, always.`;
 };
 
