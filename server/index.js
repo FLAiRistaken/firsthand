@@ -2,7 +2,30 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// CORS configuration with whitelist
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+    // Check if the origin is in the whitelist
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-proxy-secret'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -60,6 +83,17 @@ app.post('/api/chat', (req, res) => {
     return res.status(400).json({ error: 'model string is required' });
   }
 
+  // Trim and validate model
+  const trimmedModel = model.trim();
+  if (trimmedModel === '') {
+    return res.status(400).json({ error: 'model must not be empty' });
+  }
+
+  // Validate system field if present
+  if (system !== undefined && typeof system !== 'string') {
+    return res.status(400).json({ error: 'system must be a string if provided' });
+  }
+
   // Validate max_tokens is a positive integer
   if (typeof max_tokens !== 'number' || !Number.isInteger(max_tokens) || max_tokens <= 0) {
     return res.status(400).json({ error: 'max_tokens must be a positive integer' });
@@ -69,10 +103,10 @@ app.post('/api/chat', (req, res) => {
   const safeMaxTokens = Math.min(max_tokens, 1000);
 
   const body = {
-    model,
+    model: trimmedModel,
     max_tokens: safeMaxTokens,
     messages,
-    ...(system ? { system } : {}),
+    ...(typeof system === 'string' ? { system } : {}),
   };
 
   const controller = new AbortController();
