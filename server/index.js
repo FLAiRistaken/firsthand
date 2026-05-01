@@ -134,20 +134,21 @@ app.post('/api/chat', (req, res) => {
   })
     .then(async (anthropicRes) => {
       clearTimeout(timeoutId);
-      let data;
+      const dataText = await anthropicRes.text();
+      let data = dataText;
       let isJson = false;
       try {
-        data = await anthropicRes.json();
+        data = JSON.parse(dataText);
         isJson = true;
       } catch (_) {
-        data = await anthropicRes.clone().text();
+        // body is not JSON; data remains the raw text string
       }
       if (!anthropicRes.ok) {
         return isJson
           ? res.status(anthropicRes.status).json(data)
-          : res.status(anthropicRes.status).type('text').send(data);
+          : res.status(anthropicRes.status).type('text').send(dataText);
       }
-      return isJson ? res.json(data) : res.type('text').send(data);
+      return isJson ? res.json(data) : res.type('text').send(dataText);
     })
     .catch((err) => {
       clearTimeout(timeoutId);
