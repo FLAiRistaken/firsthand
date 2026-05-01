@@ -38,11 +38,31 @@ app.post('/api/chat', (req, res) => {
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'messages array is required' });
   }
+  if (messages.length === 0) {
+    return res.status(400).json({ error: 'messages array must not be empty' });
+  }
+
+  // Validate each message in the array
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (!msg || typeof msg !== 'object' || Array.isArray(msg)) {
+      return res.status(400).json({ error: `messages[${i}] must be an object` });
+    }
+    if (typeof msg.role !== 'string' || msg.role.trim() === '') {
+      return res.status(400).json({ error: `messages[${i}].role must be a non-empty string` });
+    }
+    if (typeof msg.content !== 'string' || msg.content.trim() === '') {
+      return res.status(400).json({ error: `messages[${i}].content must be a non-empty string` });
+    }
+  }
+
   if (!model || typeof model !== 'string') {
     return res.status(400).json({ error: 'model string is required' });
   }
-  if (!max_tokens || typeof max_tokens !== 'number') {
-    return res.status(400).json({ error: 'max_tokens number is required' });
+
+  // Validate max_tokens is a positive integer
+  if (typeof max_tokens !== 'number' || !Number.isInteger(max_tokens) || max_tokens <= 0) {
+    return res.status(400).json({ error: 'max_tokens must be a positive integer' });
   }
 
   // Cap max_tokens to prevent abuse
@@ -56,7 +76,16 @@ app.post('/api/chat', (req, res) => {
   };
 
   const controller = new AbortController();
-  const timeoutMs = process.env.ANTHROPIC_TIMEOUT_MS || 10000;
+
+  // Parse and validate ANTHROPIC_TIMEOUT_MS
+  let timeoutMs = 10000; // default
+  if (process.env.ANTHROPIC_TIMEOUT_MS) {
+    const parsed = Number.parseInt(process.env.ANTHROPIC_TIMEOUT_MS, 10);
+    if (Number.isFinite(parsed) && parsed > 0 && Number.isInteger(parsed)) {
+      timeoutMs = parsed;
+    }
+  }
+
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   fetch('https://api.anthropic.com/v1/messages', {
