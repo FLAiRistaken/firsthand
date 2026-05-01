@@ -100,3 +100,80 @@ export const upsertProfile = async (
 
   return data as UserProfile;
 };
+
+export const deleteUserAccount = async (userId: string): Promise<void> => {
+  // Delete all logs
+  const { error: logsError } = await supabase
+    .from('logs')
+    .delete()
+    .eq('user_id', userId);
+
+  if (logsError) {
+    console.error('Error deleting logs:', logsError);
+    throw logsError;
+  }
+
+  // Delete profile
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', userId);
+
+  if (profileError) {
+    console.error('Error deleting profile:', profileError);
+    throw profileError;
+  }
+
+  // Sign out
+  await supabase.auth.signOut();
+};
+
+export const exportUserData = async (userId: string): Promise<string> => {
+  const [logsResult, profileResult] = await Promise.all([
+    supabase
+      .from('logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(),
+  ]);
+
+  if (logsResult.error) throw logsResult.error;
+  if (profileResult.error) throw profileResult.error;
+
+  const logs = logsResult.data ?? [];
+  const profile = profileResult.data;
+
+  // Build CSV
+  const profileSection = [
+    '# PROFILE',
+    'name,occupation,goal,success_definition,created_at',
+    [
+      profile?.name ?? '',
+      profile?.occupation ?? '',
+      `"${(profile?.goal ?? '').replace(/"/g, '""')}"`,
+      `"${(profile?.success_definition ?? '').replace(/"/g, '""')}"`,
+      profile?.created_at ?? '',
+    ].join(','),
+    '',
+    '# LOGS',
+    'id,timestamp,type,category,context,note,duration_mins',
+    ...logs.map(log =>
+      [
+        log.id,
+        log.timestamp,
+        log.type,
+        log.category,
+        log.context ?? '',
+        `"${(log.note ?? '').replace(/"/g, '""')}"`,
+        log.duration_mins ?? '',
+      ].join(',')
+    ),
+  ].join('\n');
+
+  return profileSection;
+};
