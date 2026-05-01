@@ -17,15 +17,33 @@ const NOTIFICATION_MESSAGES = [
 ];
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    // Pick a random message at delivery time instead of schedule time
+    const randomMessage =
+      NOTIFICATION_MESSAGES[
+        Math.floor(Math.random() * NOTIFICATION_MESSAGES.length)
+      ];
+
+    // Override the notification content with a fresh random message
+    notification.request.content.body = randomMessage;
+
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
+/**
+ * Request notification permission from the user.
+ * Note: This function intentionally returns false for non-iOS platforms as the app
+ * is iOS-first and Android support is planned for a future phase.
+ * Callers like ProfileScreen.tsx and OnboardingScreen.tsx are expected to handle
+ * a false return appropriately (skip notification setup or show informational alerts).
+ */
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'ios') return false;
 
@@ -37,9 +55,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 export const scheduleDaily = async (time: string): Promise<void> => {
-  // Cancel any existing scheduled notifications
-  await Notifications.cancelAllScheduledNotificationsAsync();
-
   const [hourStr, minuteStr] = time.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = parseInt(minuteStr, 10);
@@ -49,23 +64,28 @@ export const scheduleDaily = async (time: string): Promise<void> => {
     return;
   }
 
-  const randomMessage =
-    NOTIFICATION_MESSAGES[
-      Math.floor(Math.random() * NOTIFICATION_MESSAGES.length)
-    ];
+  try {
+    // Cancel any existing scheduled notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Firsthand',
-      body: randomMessage,
-      sound: false,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour,
-      minute,
-    },
-  });
+    // Schedule with a placeholder body - the actual message will be
+    // randomly selected at delivery time by the notification handler
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Firsthand',
+        body: 'Time to log your thinking',
+        sound: false,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+  } catch (error) {
+    console.error(`Failed to schedule notification for ${time}:`, error);
+    return;
+  }
 };
 
 export const cancelNotifications = async (): Promise<void> => {

@@ -458,29 +458,37 @@ export default function ProfileScreen() {
 
           <View style={styles.divider} />
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md }}>
-            <View style={{ flex: 1, paddingRight: Spacing.md }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.textPrimary }}>Daily reminder</Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: FontSizes.sm, color: Colors.textMuted, marginTop: 2 }}>A nudge to log your thinking each day.</Text>
+          <View style={styles.notificationRow}>
+            <View style={styles.notificationTextContainer}>
+              <Text style={styles.notificationLabel}>Daily reminder</Text>
+              <Text style={styles.notificationDescription}>A nudge to log your thinking each day.</Text>
             </View>
             <Switch
               value={profile?.notifications_enabled ?? false}
               onValueChange={async (enabled) => {
-                if (enabled) {
-                  const granted = await requestNotificationPermission();
-                  if (!granted) {
-                    Alert.alert(
-                      'Permission required',
-                      'Enable notifications in Settings to use this feature.'
-                    );
-                    return;
+                try {
+                  if (enabled) {
+                    const granted = await requestNotificationPermission();
+                    if (!granted) {
+                      Alert.alert(
+                        'Permission required',
+                        'Enable notifications in Settings to use this feature.'
+                      );
+                      return;
+                    }
+                    const time = profile?.notification_time ?? '20:00';
+                    await scheduleDaily(time);
+                    await updateProfile({ notifications_enabled: true });
+                  } else {
+                    await cancelNotifications();
+                    await updateProfile({ notifications_enabled: false });
                   }
-                  const time = profile?.notification_time ?? '20:00';
-                  await scheduleDaily(time);
-                  await updateProfile({ notifications_enabled: true });
-                } else {
-                  await cancelNotifications();
-                  await updateProfile({ notifications_enabled: false });
+                } catch (error) {
+                  console.error('Failed to toggle notifications:', error);
+                  Alert.alert(
+                    'Error',
+                    'Failed to update notification settings. Please try again.'
+                  );
                 }
               }}
               trackColor={{ false: Colors.streakEmpty, true: Colors.primaryLight }}
@@ -489,11 +497,11 @@ export default function ProfileScreen() {
           </View>
 
           {profile?.notifications_enabled && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.textPrimary }}>Reminder time</Text>
+            <View style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>Reminder time</Text>
 
               <TouchableOpacity onPress={() => setShowTimePicker(true)}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.primary }}>
+                <Text style={styles.reminderTime}>
                   {(() => {
                     const [h, m] = (profile?.notification_time ?? '20:00').split(':');
                     const date = new Date();
@@ -502,29 +510,37 @@ export default function ProfileScreen() {
                   })()}
                 </Text>
               </TouchableOpacity>
-
-              {showTimePicker && (
-                <DateTimePicker
-                  mode="time"
-                  display="spinner"
-                  value={(() => {
-                    const [h, m] = (profile?.notification_time ?? '20:00').split(':');
-                    const date = new Date();
-                    date.setHours(parseInt(h, 10), parseInt(m, 10));
-                    return date;
-                  })()}
-                  onChange={async (event, date) => {
-                    setShowTimePicker(false);
-                    if (!date) return;
-                    const hh = String(date.getHours()).padStart(2, '0');
-                    const mm = String(date.getMinutes()).padStart(2, '0');
-                    const timeString = `${hh}:${mm}`;
-                    await scheduleDaily(timeString);
-                    await updateProfile({ notification_time: timeString });
-                  }}
-                />
-              )}
             </View>
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              mode="time"
+              display="default"
+              value={(() => {
+                const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                const date = new Date();
+                date.setHours(parseInt(h, 10), parseInt(m, 10));
+                return date;
+              })()}
+              onChange={async (event, date) => {
+                setShowTimePicker(false);
+                if (!date) return;
+                const hh = String(date.getHours()).padStart(2, '0');
+                const mm = String(date.getMinutes()).padStart(2, '0');
+                const timeString = `${hh}:${mm}`;
+                try {
+                  await scheduleDaily(timeString);
+                  await updateProfile({ notification_time: timeString });
+                } catch (error) {
+                  console.error('Failed to update notification time:', error);
+                  Alert.alert(
+                    'Error',
+                    'Failed to update notification time. Please try again.'
+                  );
+                }
+              }}
+            />
           )}
         </View>
       </Card>
@@ -906,5 +922,31 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+  },
+  notificationTextContainer: {
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
+  notificationLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.textPrimary,
+  },
+  notificationDescription: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  reminderTime: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.primary,
   },
 });
