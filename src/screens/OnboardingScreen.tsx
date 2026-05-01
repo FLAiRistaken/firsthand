@@ -305,8 +305,14 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             style={styles.notificationMaybeLater}
             onPress={async () => {
-              await updateProfile({ onboarded: true });
-              setIsCreatingAccount(false);
+              try {
+                await updateProfile({ onboarded: true });
+              } catch (error) {
+                console.error('Failed to update profile:', error);
+                Alert.alert('Error', 'Failed to save. Please try again.');
+              } finally {
+                setIsCreatingAccount(false);
+              }
             }}
           >
             <Text style={{ fontFamily: Fonts.sans, fontSize: FontSizes.md, color: Colors.textHint }}>Maybe later</Text>
@@ -371,10 +377,10 @@ export default function OnboardingScreen() {
 
   return (
     <ErrorBoundary screenName="Onboarding">
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <View style={[styles.wordmarkContainer, { marginBottom: 0 }]}>
@@ -454,7 +460,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
       )}
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
     </ErrorBoundary>
   );
 }

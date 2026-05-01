@@ -16,17 +16,9 @@ const NOTIFICATION_MESSAGES = [
   "Your streak is waiting — anything to log?",
 ];
 
+// Set notification display behavior
 Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    // Pick a random message at delivery time instead of schedule time
-    const randomMessage =
-      NOTIFICATION_MESSAGES[
-        Math.floor(Math.random() * NOTIFICATION_MESSAGES.length)
-      ];
-
-    // Override the notification content with a fresh random message
-    notification.request.content.body = randomMessage;
-
+  handleNotification: async () => {
     return {
       shouldShowAlert: true,
       shouldPlaySound: false,
@@ -35,6 +27,26 @@ Notifications.setNotificationHandler({
       shouldShowList: true,
     };
   },
+});
+
+// Replace notification content with random message at delivery time
+Notifications.addNotificationReceivedListener((notification) => {
+  // Pick a random message
+  const randomMessage =
+    NOTIFICATION_MESSAGES[
+      Math.floor(Math.random() * NOTIFICATION_MESSAGES.length)
+    ];
+
+  // Schedule a new local notification immediately with the random message
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title: notification.request.content.title || 'Firsthand',
+      body: randomMessage,
+      sound: false,
+      data: notification.request.content.data,
+    },
+    trigger: null, // null means immediate delivery
+  });
 });
 
 /**
@@ -61,7 +73,7 @@ export const scheduleDaily = async (time: string): Promise<void> => {
 
   if (isNaN(hour) || isNaN(minute)) {
     console.error('Invalid notification time:', time);
-    return;
+    throw new Error(`Invalid notification time: ${time}`);
   }
 
   try {
@@ -84,7 +96,7 @@ export const scheduleDaily = async (time: string): Promise<void> => {
     });
   } catch (error) {
     console.error(`Failed to schedule notification for ${time}:`, error);
-    return;
+    throw error;
   }
 };
 

@@ -201,10 +201,10 @@ export default function ProfileScreen() {
 
   return (
     <ErrorBoundary screenName="Profile">
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
@@ -465,7 +465,7 @@ export default function ProfileScreen() {
             </View>
             <Switch
               value={profile?.notifications_enabled ?? false}
-              onValueChange={async (enabled) => {
+              onValueChange={async (enabled: boolean) => {
                 try {
                   if (enabled) {
                     const granted = await requestNotificationPermission();
@@ -480,15 +480,18 @@ export default function ProfileScreen() {
                     await scheduleDaily(time);
                     await updateProfile({ notifications_enabled: true });
                   } else {
+                    setShowTimePicker(false);
                     await cancelNotifications();
                     await updateProfile({ notifications_enabled: false });
                   }
-                } catch (error) {
-                  console.error('Failed to toggle notifications:', error);
-                  Alert.alert(
-                    'Error',
-                    'Failed to update notification settings. Please try again.'
-                  );
+                } catch (error: unknown) {
+                  if (error instanceof Error) {
+                    console.error('Failed to toggle notifications:', error);
+                    Alert.alert('Error', `Failed to update notification settings: ${error.message}`);
+                  } else {
+                    console.error('Failed to toggle notifications:', error);
+                    Alert.alert('Error', 'Failed to update notification settings.');
+                  }
                 }
               }}
               trackColor={{ false: Colors.streakEmpty, true: Colors.primaryLight }}
@@ -523,21 +526,24 @@ export default function ProfileScreen() {
                 date.setHours(parseInt(h, 10), parseInt(m, 10));
                 return date;
               })()}
-              onChange={async (event, date) => {
+              onChange={async (event: any, date?: Date) => {
                 setShowTimePicker(false);
                 if (!date) return;
+                if (!profile?.notifications_enabled) return;
                 const hh = String(date.getHours()).padStart(2, '0');
                 const mm = String(date.getMinutes()).padStart(2, '0');
                 const timeString = `${hh}:${mm}`;
                 try {
                   await scheduleDaily(timeString);
                   await updateProfile({ notification_time: timeString });
-                } catch (error) {
-                  console.error('Failed to update notification time:', error);
-                  Alert.alert(
-                    'Error',
-                    'Failed to update notification time. Please try again.'
-                  );
+                } catch (error: unknown) {
+                  if (error instanceof Error) {
+                    console.error('Failed to update notification time:', error);
+                    Alert.alert('Error', `Failed to update notification time: ${error.message}`);
+                  } else {
+                    console.error('Failed to update notification time:', error);
+                    Alert.alert('Error', 'Failed to update notification time.');
+                  }
                 }
               }}
             />
@@ -632,7 +638,7 @@ export default function ProfileScreen() {
       </View>
 
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
     </ErrorBoundary>
   );
 }
