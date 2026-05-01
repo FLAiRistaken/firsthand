@@ -288,13 +288,15 @@ export default function OnboardingScreen() {
                 } else {
                   await updateProfile({ onboarded: true });
                 }
-                setIsCreatingAccount(false);
-              } catch (error) {
-                console.error('Failed to enable notifications:', error);
+              } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Failed to enable notifications:', errorMessage);
                 Alert.alert(
                   'Error',
                   'Failed to enable notifications. Please try again from Settings.'
                 );
+              } finally {
+                setIsCreatingAccount(false);
               }
             }}
             activeOpacity={0.8}
@@ -307,8 +309,9 @@ export default function OnboardingScreen() {
             onPress={async () => {
               try {
                 await updateProfile({ onboarded: true });
-              } catch (error) {
-                console.error('Failed to update profile:', error);
+              } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Failed to update profile:', errorMessage);
                 Alert.alert('Error', 'Failed to save. Please try again.');
               } finally {
                 setIsCreatingAccount(false);

@@ -31,7 +31,7 @@ import { ChipIcon } from '../components/icons/ChipIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { GearIcon } from '../components/icons/GearIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { requestNotificationPermission, scheduleDaily, cancelNotifications } from '../lib/notifications';
 
 export default function ProfileScreen() {
@@ -526,7 +526,7 @@ export default function ProfileScreen() {
                 date.setHours(parseInt(h, 10), parseInt(m, 10));
                 return date;
               })()}
-              onChange={async (event: any, date?: Date) => {
+              onChange={async (event: DateTimePickerEvent, date?: Date | undefined) => {
                 setShowTimePicker(false);
                 if (!date) return;
                 if (!profile?.notifications_enabled) return;

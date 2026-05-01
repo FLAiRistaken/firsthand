@@ -31,6 +31,11 @@ Notifications.setNotificationHandler({
 
 // Replace notification content with random message at delivery time
 Notifications.addNotificationReceivedListener((notification) => {
+  // Only handle scheduled reminder notifications, not the immediate replacements
+  if (notification.request.content.data?.isReminder !== true) {
+    return;
+  }
+
   // Pick a random message
   const randomMessage =
     NOTIFICATION_MESSAGES[
@@ -38,12 +43,13 @@ Notifications.addNotificationReceivedListener((notification) => {
     ];
 
   // Schedule a new local notification immediately with the random message
+  // Do NOT copy the isReminder marker so this replacement won't trigger the listener again
   Notifications.scheduleNotificationAsync({
     content: {
       title: notification.request.content.title || 'Firsthand',
       body: randomMessage,
       sound: false,
-      data: notification.request.content.data,
+      data: {}, // Explicitly set empty data to avoid copying isReminder
     },
     trigger: null, // null means immediate delivery
   });
@@ -87,6 +93,7 @@ export const scheduleDaily = async (time: string): Promise<void> => {
         title: 'Firsthand',
         body: 'Time to log your thinking',
         sound: false,
+        data: { isReminder: true }, // Mark as reminder so listener will handle it
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
