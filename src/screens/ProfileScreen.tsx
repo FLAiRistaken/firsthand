@@ -9,12 +9,17 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Share,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes, DEFAULT_CATEGORIES } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
+
 import { LogContext } from '../lib/types';
+import { deleteUserAccount, exportUserData } from '../lib/db';
 import { Card } from '../components/Card';
 import { PillButton } from '../components/PillButton';
 import { PersonIcon } from '../components/icons/PersonIcon';
@@ -27,10 +32,118 @@ import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
-  const { signOut } = useAuth();
+  const { signOut, userId } = useAuth();
+  const [isExporting, setIsExporting] = useState(false);
   const insets = useSafeAreaInsets();
 
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleExport = async (): Promise<void> => {
+    if (!userId) return;
+    let tempFileUri: string | null = null;
+    try {
+      setIsExporting(true);
+      const csv = await exportUserData(userId);
+
+      // Create a temporary file with the CSV data
+      const fileName = `firsthand_export_${new Date().getTime()}.csv`;
+      tempFileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(tempFileUri, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share the file URI
+      await Share.share({
+        url: tempFileUri,
+        title: 'Firsthand data export',
+      });
+
+      // Clean up the temp file after a delay to ensure sharing completes
+      setTimeout(async () => {
+        try {
+          if (tempFileUri) {
+            const fileInfo = await FileSystem.getInfoAsync(tempFileUri);
+            if (fileInfo.exists) {
+              await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
+            }
+          }
+        } catch (cleanupErr: unknown) {
+          if (cleanupErr instanceof Error) {
+            console.error('Error cleaning up temp file:', cleanupErr.message);
+          } else {
+            console.error('Error cleaning up temp file:', String(cleanupErr));
+          }
+        }
+      }, 5000);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Export error:', error.message);
+      } else {
+        console.error('Export error:', String(error));
+      }
+      Alert.alert('Error', 'Failed to export data. Please try again.');
+
+      // Clean up temp file on error
+      if (tempFileUri) {
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(tempFileUri);
+          if (fileInfo.exists) {
+            await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
+          }
+        } catch (cleanupErr: unknown) {
+          if (cleanupErr instanceof Error) {
+            console.error('Error cleaning up temp file on error:', cleanupErr.message);
+          } else {
+            console.error('Error cleaning up temp file on error:', String(cleanupErr));
+          }
+        }
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (!userId) return;
+    Alert.alert(
+      'Delete account?',
+      'This is permanent. All your logs and profile data will be deleted and cannot be recovered.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you sure?',
+              'This cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await deleteUserAccount(userId);
+                      // Navigation handled automatically by RootNavigator
+                      // when session becomes null after signOut
+                    } catch (err) {
+                      Alert.alert(
+                        'Error',
+                        'Failed to delete account. Please try again.'
+                      );
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
 
   const [nameDraft, setNameDraft] = useState('');
   const [occupationDraft, setOccupationDraft] = useState('');
@@ -343,35 +456,23 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={[styles.accountRow, styles.accountRowBorder]}
-          onPress={() => {
-            Alert.alert(
-              "Coming soon",
-              "Data export will be available in an upcoming update.",
-              [{ text: 'OK' }]
-            );
-          }}
+          onPress={handleExport}
+          disabled={isExporting}
         >
           <View>
             <Text style={styles.accountRowText}>Export my data</Text>
             <Text style={styles.accountRowSub}>Download all your logs as a CSV.</Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          {isExporting ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : (
+            <Text style={styles.chevron}>›</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.accountRow, styles.accountRowBorder]}
-          onPress={() => {
-            Alert.alert(
-              "Delete account?",
-              "This is permanent. All your logs and profile data will be deleted and cannot be recovered.",
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete account', style: 'destructive', onPress: () => {
-                  Alert.alert("Coming soon", "Account deletion will be available in an upcoming update.", [{ text: 'OK' }])
-                }}
-              ]
-            );
-          }}
+          onPress={handleDeleteAccount}
         >
           <View>
             <Text style={styles.accountRowDestructiveText}>Delete account</Text>

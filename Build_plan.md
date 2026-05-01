@@ -102,10 +102,10 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 |---|---|---|---|
 | 7.1 | Empty states | 🔲 Pending | All screens need explicit empty states |
 | 7.2 | Error boundaries | ✅ Done | All main screens (Home, History, Coach, Onboarding) wrapped |
-| 7.3 | Loading states | 🔲 Pending | All data-driven components |
+| 7.3 | Anthropic proxy client | ✅ Done | callClaude now calls DO proxy (firsthand-tjvn5.ondigitalocean.app) via EXPO_PUBLIC_PROXY_SECRET |
 | 7.4 | Anthropic API backend proxy | ✅ Done | Express proxy server created in /server, ready for deployment |
-| 7.5 | App icon + splash screen | 🔲 Pending | Firsthand green dot identity |
-| 7.6 | Apple Developer account | 🔲 Pending | Required for real Apple Sign In + TestFlight |
+| 7.5 | App icon + splash screen | ✅ Done | Firsthand green dot identity |
+| 7.6 | Apple Developer account | ✅ Done | Required for real Apple Sign In + TestFlight |
 | 7.7 | Development build via EAS | 🔲 Pending | Removes Expo Go limitations, enables Google Sign In |
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
 | 7.9 | Note 200-char limit — LogModal + EditLogModal | ✅ Done | maxLength enforced, counter appears at 180 chars |
@@ -129,6 +129,7 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 | `src/lib/googleSignIn.ts` | Stubbed for Expo Go | Replace with real `@react-native-google-signin/google-signin` once EAS dev build configured |
 | `.env.local` | Google client IDs are placeholders | Replace once Google Sign In configured |
 | `src/lib/anthropic.ts` | Sonnet model string | ✅ Fixed — `claude-sonnet-4-6` |
+| `.env.local` / `anthropic.ts` | Raw Anthropic API key exposed in client env | ✅ Fixed — key removed; all calls go through DO proxy via `EXPO_PUBLIC_PROXY_SECRET` |
 | `src/screens/CoachScreen.tsx` | Haiku model string | ✅ Fixed — `claude-haiku-4-5-20251001` |
 | `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | ✅ Fixed — Removed dead filter |
 | `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | ✅ Fixed — Renamed to `deleteLog` for clarity |
@@ -186,6 +187,7 @@ Do not build any of the following until explicitly added to the build plan:
 
 | # | Prompt | Outcome |
 |---|---|---|
+| 22 | Account deletion + data export | ✅ Merged |
 | 12 | Profile screen + AppNavigator stack | ✅ Merged |
 | 01 | Theme constants + font loading | ✅ Merged — Copilot fixed font key strings, `Category` type with `string & {}` |
 | 02 | Supabase client + types + DB schema + helpers | ✅ Merged — Copilot fixed `.maybeSingle()`, `updateLog` userId param, removed `Database = any` |
@@ -217,6 +219,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 17 | Model string updates (Sonnet 4.6, Haiku dated) | ✅ Merged |
 | 18 | Error boundaries — all main screens | ✅ Merged |
 | 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
+| 21 | Anthropic proxy client — calls DO proxy instead of Anthropic directly | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)
@@ -230,6 +233,7 @@ Do not build any of the following until explicitly added to the build plan:
 - **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
 - **HF-05**: Note 200-char enforcement — LogModal + EditLogModal — ✅ Merged
 - **HF-06**: develop→main PR fixes — theme tokens, ErrorBoundary on Profile, model param fix — ✅ Merged
+- **HF-07**: Fix CI type check — exportUserData/deleteUserAccount imports + expo-file-system legacy API — ✅ Merged
 
 ---
 
