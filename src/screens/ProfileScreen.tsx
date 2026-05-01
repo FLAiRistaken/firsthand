@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Paths, File } from 'expo-file-system';
 import { Colors, Fonts, FontSizes, Spacing, Radius, BorderWidths, Sizes, DEFAULT_CATEGORIES } from '../constants/theme';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
@@ -38,15 +39,53 @@ export default function ProfileScreen() {
 
   const handleExport = async () => {
     if (!userId) return;
+    let tempFileUri: string | null = null;
     try {
       setIsExporting(true);
       const csv = await exportUserData(userId);
+
+      // Create a temporary file with the CSV data
+      const fileName = `firsthand_export_${new Date().getTime()}.csv`;
+      tempFileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+      await FileSystem.writeAsStringAsync(tempFileUri, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Share the file URI
       await Share.share({
-        message: csv,
+        url: tempFileUri,
         title: 'Firsthand data export',
       });
+
+      // Clean up the temp file after a delay to ensure sharing completes
+      setTimeout(async () => {
+        try {
+          if (tempFileUri) {
+            const fileInfo = await FileSystem.getInfoAsync(tempFileUri);
+            if (fileInfo.exists) {
+              await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
+            }
+          }
+        } catch (cleanupErr) {
+          console.error('Error cleaning up temp file:', cleanupErr);
+        }
+      }, 5000);
     } catch (err) {
+      console.error('Export error:', err);
       Alert.alert('Error', 'Failed to export data. Please try again.');
+
+      // Clean up temp file on error
+      if (tempFileUri) {
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(tempFileUri);
+          if (fileInfo.exists) {
+            await FileSystem.deleteAsync(tempFileUri, { idempotent: true });
+          }
+        } catch (cleanupErr) {
+          console.error('Error cleaning up temp file on error:', cleanupErr);
+        }
+      }
     } finally {
       setIsExporting(false);
     }
