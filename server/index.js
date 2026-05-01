@@ -116,67 +116,8 @@ app.post('/api/delete-account', async (req, res) => {
       return res.status(403).json({ error: 'User ID mismatch' });
     }
 
-    // Delete logs (cascade should handle this, but explicit delete for safety)
-    const deleteLogsController = new AbortController();
-    const deleteLogsTimeoutId = setTimeout(() => deleteLogsController.abort(), 10000);
-
-    let deleteLogsResponse;
-    try {
-      deleteLogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          'Prefer': 'return=minimal',
-        },
-        signal: deleteLogsController.signal,
-      });
-      clearTimeout(deleteLogsTimeoutId);
-    } catch (deleteLogsErr) {
-      clearTimeout(deleteLogsTimeoutId);
-      if (deleteLogsErr.name === 'AbortError') {
-        console.error('Timeout deleting user logs');
-        return res.status(504).json({ error: 'Request timeout deleting logs' });
-      }
-      throw deleteLogsErr;
-    }
-
-    if (!deleteLogsResponse.ok) {
-      console.error('Failed to delete logs:', await deleteLogsResponse.text());
-      return res.status(500).json({ error: 'Failed to delete user logs' });
-    }
-
-    // Delete profile
-    const deleteProfileController = new AbortController();
-    const deleteProfileTimeoutId = setTimeout(() => deleteProfileController.abort(), 10000);
-
-    let deleteProfileResponse;
-    try {
-      deleteProfileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          'Prefer': 'return=minimal',
-        },
-        signal: deleteProfileController.signal,
-      });
-      clearTimeout(deleteProfileTimeoutId);
-    } catch (deleteProfileErr) {
-      clearTimeout(deleteProfileTimeoutId);
-      if (deleteProfileErr.name === 'AbortError') {
-        console.error('Timeout deleting user profile');
-        return res.status(504).json({ error: 'Request timeout deleting profile' });
-      }
-      throw deleteProfileErr;
-    }
-
-    if (!deleteProfileResponse.ok) {
-      console.error('Failed to delete profile:', await deleteProfileResponse.text());
-      return res.status(500).json({ error: 'Failed to delete user profile' });
-    }
-
-    // Delete the auth user using admin API
+    // Delete the auth user first — if this fails we abort without touching any data,
+    // so we never leave an active auth account in a partially-deleted state.
     const deleteUserController = new AbortController();
     const deleteUserTimeoutId = setTimeout(() => deleteUserController.abort(), 10000);
 
@@ -205,6 +146,49 @@ app.post('/api/delete-account', async (req, res) => {
       console.error('Failed to delete auth user:', errorText);
       return res.status(500).json({ error: 'Failed to delete user account' });
     }
+
+    // Auth account is gone — now clean up DB rows best-effort.
+    // Failures here are logged but do NOT return a 500; the auth account no longer
+    // exists so orphaned rows are non-critical and can be cleaned up out-of-band.
+
+    // Best-effort helper: retry up to maxAttempts times with a short delay.
+    const bestEffortDelete = async (url, label, maxAttempts = 3) => {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 10000);
+        try {
+          const res = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': SUPABASE_SERVICE_ROLE_KEY,
+              'Prefer': 'return=minimal',
+            },
+            signal: ctrl.signal,
+          });
+          clearTimeout(tid);
+          if (res.ok) return; // success
+          const body = await res.text();
+          console.error(`[attempt ${attempt}/${maxAttempts}] Failed to delete ${label} (HTTP ${res.status}):`, body);
+        } catch (err) {
+          clearTimeout(tid);
+          if (err.name === 'AbortError') {
+            console.error(`[attempt ${attempt}/${maxAttempts}] Timeout deleting ${label}`);
+          } else {
+            console.error(`[attempt ${attempt}/${maxAttempts}] Error deleting ${label}:`, err);
+          }
+        }
+        // Brief back-off before retry (skip on final attempt)
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        }
+      }
+      console.error(`Giving up on deleting ${label} after ${maxAttempts} attempts — orphaned rows may need manual cleanup.`);
+    };
+
+    // Delete logs then profile (cascade should handle logs, but explicit is safer)
+    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, 'logs');
+    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, 'profile');
 
     return res.json({ success: true });
   } catch (err) {
