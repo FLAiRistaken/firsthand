@@ -152,11 +152,13 @@ export const deleteUserAccount = async (userId: string): Promise<void> => {
   }
 
   // Sign out after successful deletion
+  // Try remote sign-out first, but fall back to local scope if it fails
   const { error: signOutError } = await supabase.auth.signOut();
 
   if (signOutError) {
     console.error('Error signing out after account deletion:', signOutError);
-    // Don't throw here since account is already deleted
+    // Fall back to local scope to ensure session is cleared
+    await supabase.auth.signOut({ scope: 'local' });
   }
 };
 

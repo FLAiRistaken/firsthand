@@ -196,15 +196,13 @@ app.post('/api/delete-account', async (req, res) => {
       console.error(`Giving up on deleting ${label} after ${maxAttempts} attempts — orphaned rows may need manual cleanup.`);
     };
 
-    // Respond immediately — the client's token is now invalid and we don't want
-    // to block on retries. DB cleanup runs in the background.
-    res.json({ success: true });
+    // Delete logs then profile best-effort before responding.
+    // Wait for these deletions to complete to ensure they succeed.
+    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, 'logs');
+    await bestEffortDelete(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, 'profile');
 
-    // Delete logs then profile best-effort in the background (fire-and-forget).
-    // These are intentionally NOT awaited so the response is already sent above.
-    bestEffortDelete(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, 'logs')
-      .then(() => bestEffortDelete(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, 'profile'))
-      .catch((err) => console.error('Unexpected error in background DB cleanup:', err));
+    // Respond after deletions are complete.
+    res.json({ success: true });
   } catch (err) {
     console.error('Error deleting user account:', err);
     return res.status(500).json({ error: 'Internal server error' });
@@ -213,12 +211,6 @@ app.post('/api/delete-account', async (req, res) => {
 
 // Anthropic proxy endpoint
 app.post('/api/chat', (req, res) => {
-  // Validate shared secret
-  const secret = req.headers['x-proxy-secret'];
-  if (!secret || secret !== PROXY_SECRET) {
-    return res.status(401).json({ error: 'Unauthorised' });
-  }
-
   if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Request body must be a JSON object' });
   }

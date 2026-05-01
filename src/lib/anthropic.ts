@@ -1,5 +1,4 @@
-const PROXY_URL = 'https://firsthand-tjvn5.ondigitalocean.app';
-const PROXY_SECRET = process.env.EXPO_PUBLIC_PROXY_SECRET;
+const PROXY_URL = process.env.EXPO_PUBLIC_PROXY_URL || 'https://firsthand-tjvn5.ondigitalocean.app';
 
 export const callClaude = async (
   messages: { role: 'user' | 'assistant'; content: string }[],
@@ -7,10 +6,6 @@ export const callClaude = async (
   maxTokens: number = 150,
   model: string = 'claude-sonnet-4-6'
 ): Promise<string> => {
-  if (!PROXY_SECRET) {
-    throw new Error('EXPO_PUBLIC_PROXY_SECRET is not set');
-  }
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -19,7 +14,6 @@ export const callClaude = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-proxy-secret': PROXY_SECRET,
       },
       body: JSON.stringify({
         messages,
@@ -42,7 +36,14 @@ export const callClaude = async (
     const textBlock = data.content?.find(
       (block: { type: string }) => block.type === 'text'
     );
-    return (textBlock as { type: string; text: string } | undefined)?.text ?? '';
+
+    if (!textBlock || !(textBlock as { type: string; text?: string }).text) {
+      throw new Error(
+        `No text block found in response. Response data: ${JSON.stringify(data)}`
+      );
+    }
+
+    return (textBlock as { type: string; text: string }).text;
   } finally {
     clearTimeout(timeout);
   }
