@@ -11,6 +11,8 @@ import {
   Platform,
   Share,
   ActivityIndicator,
+
+  Switch
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -29,11 +31,14 @@ import { ChipIcon } from '../components/icons/ChipIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { GearIcon } from '../components/icons/GearIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { requestNotificationPermission, scheduleDaily, cancelNotifications } from '../lib/notifications';
 
 export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
   const { signOut, userId } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const insets = useSafeAreaInsets();
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -450,6 +455,77 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+
+          <View style={styles.divider} />
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md }}>
+            <View style={{ flex: 1, paddingRight: Spacing.md }}>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.textPrimary }}>Daily reminder</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: FontSizes.sm, color: Colors.textMuted, marginTop: 2 }}>A nudge to log your thinking each day.</Text>
+            </View>
+            <Switch
+              value={profile?.notifications_enabled ?? false}
+              onValueChange={async (enabled) => {
+                if (enabled) {
+                  const granted = await requestNotificationPermission();
+                  if (!granted) {
+                    Alert.alert(
+                      'Permission required',
+                      'Enable notifications in Settings to use this feature.'
+                    );
+                    return;
+                  }
+                  const time = profile?.notification_time ?? '20:00';
+                  await scheduleDaily(time);
+                  await updateProfile({ notifications_enabled: true });
+                } else {
+                  await cancelNotifications();
+                  await updateProfile({ notifications_enabled: false });
+                }
+              }}
+              trackColor={{ false: Colors.streakEmpty, true: Colors.primaryLight }}
+              thumbColor={profile?.notifications_enabled ? Colors.primary : Colors.textHint}
+            />
+          </View>
+
+          {profile?.notifications_enabled && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.md }}>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.textPrimary }}>Reminder time</Text>
+
+              <TouchableOpacity onPress={() => setShowTimePicker(true)}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSizes.md, color: Colors.primary }}>
+                  {(() => {
+                    const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                    const date = new Date();
+                    date.setHours(parseInt(h, 10), parseInt(m, 10));
+                    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                  })()}
+                </Text>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  mode="time"
+                  display="spinner"
+                  value={(() => {
+                    const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                    const date = new Date();
+                    date.setHours(parseInt(h, 10), parseInt(m, 10));
+                    return date;
+                  })()}
+                  onChange={async (event, date) => {
+                    setShowTimePicker(false);
+                    if (!date) return;
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const mm = String(date.getMinutes()).padStart(2, '0');
+                    const timeString = `${hh}:${mm}`;
+                    await scheduleDaily(timeString);
+                    await updateProfile({ notification_time: timeString });
+                  }}
+                />
+              )}
+            </View>
+          )}
         </View>
       </Card>
 

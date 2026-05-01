@@ -223,6 +223,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 24 | Coach error UI — honest error message instead of fake fallback | ✅ Merged |
 | 25 | Coach session persistence — AsyncStorage, same-day hydration | ✅ Merged |
 | 26 | Patterns view — time of day, day of week, top categories | ✅ Merged |
+| 27 | Daily notifications — opt-in, rotating messages, time picker | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)
