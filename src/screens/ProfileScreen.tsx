@@ -505,6 +505,34 @@ export default function ProfileScreen() {
 
       </Card>
 
+      {__DEV__ && (
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              'Reset onboarding?',
+              'This will take you back to the onboarding flow.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Reset',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await updateProfile({ onboarded: false });
+                    } catch {
+                      Alert.alert('Error', 'Failed to reset onboarding.');
+                    }
+                  },
+                },
+              ]
+            );
+          }}
+          style={styles.devResetButton}
+        >
+          <Text style={styles.devResetText}>DEV: Reset onboarding</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>Firsthand v0.1.0</Text>
@@ -792,5 +820,15 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.xs,
     color: Colors.textHint,
     marginTop: Spacing.xs,
+  },
+  devResetButton: {
+    alignSelf: 'center',
+    marginBottom: Spacing.lg,
+    padding: Spacing.sm,
+  },
+  devResetText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
   },
 });
