@@ -55,6 +55,10 @@ app.post('/api/chat', (req, res) => {
     return res.status(401).json({ error: 'Unauthorised' });
   }
 
+  if (typeof req.body !== 'object' || req.body === null || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Request body must be a JSON object' });
+  }
+
   const { messages, system, model, max_tokens } = req.body;
 
   // Validate required fields
