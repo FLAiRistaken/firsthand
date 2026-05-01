@@ -21,8 +21,8 @@ const corsOptions = {
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-proxy-secret'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-proxy-secret', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
@@ -30,6 +30,8 @@ app.use(express.json({ limit: '10kb' }));
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const PROXY_SECRET = process.env.PROXY_SECRET;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const PORT = process.env.PORT || 3000;
 
 if (!ANTHROPIC_API_KEY) {
@@ -42,9 +44,108 @@ if (!PROXY_SECRET) {
   process.exit(1);
 }
 
+if (!SUPABASE_URL) {
+  console.error('SUPABASE_URL environment variable is required');
+  process.exit(1);
+}
+
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+  process.exit(1);
+}
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// Delete user account endpoint - uses Supabase service role
+app.post('/api/delete-account', async (req, res) => {
+  // Validate shared secret
+  const secret = req.headers['x-proxy-secret'];
+  if (!secret || secret !== PROXY_SECRET) {
+    return res.status(401).json({ error: 'Unauthorised' });
+  }
+
+  const { userId, accessToken } = req.body;
+
+  if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    return res.status(400).json({ error: 'userId is required' });
+  }
+
+  if (!accessToken || typeof accessToken !== 'string' || accessToken.trim() === '') {
+    return res.status(400).json({ error: 'accessToken is required' });
+  }
+
+  try {
+    // Verify the user's access token matches the userId they're trying to delete
+    const verifyResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      },
+    });
+
+    if (!verifyResponse.ok) {
+      return res.status(401).json({ error: 'Invalid access token' });
+    }
+
+    const userData = await verifyResponse.json();
+
+    if (userData.id !== userId) {
+      return res.status(403).json({ error: 'User ID mismatch' });
+    }
+
+    // Delete logs (cascade should handle this, but explicit delete for safety)
+    const deleteLogsResponse = await fetch(`${SUPABASE_URL}/rest/v1/logs?user_id=eq.${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        'Prefer': 'return=minimal',
+      },
+    });
+
+    if (!deleteLogsResponse.ok) {
+      console.error('Failed to delete logs:', await deleteLogsResponse.text());
+      return res.status(500).json({ error: 'Failed to delete user logs' });
+    }
+
+    // Delete profile
+    const deleteProfileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        'Prefer': 'return=minimal',
+      },
+    });
+
+    if (!deleteProfileResponse.ok) {
+      console.error('Failed to delete profile:', await deleteProfileResponse.text());
+      return res.status(500).json({ error: 'Failed to delete user profile' });
+    }
+
+    // Delete the auth user using admin API
+    const deleteUserResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      },
+    });
+
+    if (!deleteUserResponse.ok) {
+      const errorText = await deleteUserResponse.text();
+      console.error('Failed to delete auth user:', errorText);
+      return res.status(500).json({ error: 'Failed to delete user account' });
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting user account:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Anthropic proxy endpoint
