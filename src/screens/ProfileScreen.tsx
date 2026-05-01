@@ -115,19 +115,24 @@ export default function ProfileScreen() {
           text: 'Delete account',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              'Are you sure?',
-              'This cannot be undone.',
+            Alert.prompt(
+              'Type DELETE to confirm',
+              'This cannot be undone. Type DELETE in capitals to confirm.',
               [
                 { text: 'Cancel', style: 'cancel' },
                 {
                   text: 'Delete everything',
                   style: 'destructive',
-                  onPress: async () => {
+                  onPress: async (input?: string) => {
+                    if (input?.trim() !== 'DELETE') {
+                      Alert.alert(
+                        'Incorrect',
+                        'You must type DELETE exactly to confirm.'
+                      );
+                      return;
+                    }
                     try {
-                      await deleteUserAccount(userId);
-                      // Navigation handled automatically by RootNavigator
-                      // when session becomes null after signOut
+                      await deleteUserAccount(userId!);
                     } catch (err) {
                       Alert.alert(
                         'Error',
@@ -136,7 +141,8 @@ export default function ProfileScreen() {
                     }
                   },
                 },
-              ]
+              ],
+              'plain-text'
             );
           },
         },
