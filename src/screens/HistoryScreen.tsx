@@ -106,16 +106,18 @@ export default function HistoryScreen() {
     });
 
     // Category breakdown
-    const categoryMap: Record<string, { wins: number; sins: number }> = {};
+    const categoryMap = new Map<string, { wins: number; sins: number }>();
     logs.forEach(log => {
-      if (!categoryMap[log.category]) {
-        categoryMap[log.category] = { wins: 0, sins: 0 };
+      const counts = categoryMap.get(log.category);
+      if (!counts) {
+        categoryMap.set(log.category, { wins: 0, sins: 0 });
       }
-      if (log.type === 'win') categoryMap[log.category].wins++;
-      else categoryMap[log.category].sins++;
+      const current = categoryMap.get(log.category)!;
+      if (log.type === 'win') current.wins++;
+      else current.sins++;
     });
 
-    const categories = Object.entries(categoryMap)
+    const categories = Array.from(categoryMap.entries())
       .map(([name, counts]) => ({ name, ...counts, total: counts.wins + counts.sins }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 8);
@@ -145,7 +147,7 @@ export default function HistoryScreen() {
     );
   }
 
-  if (!logs.length) {
+  if (!logs.length && view !== 'patterns') {
     return (
       <View style={[styles.container, styles.centerAll]}>
         <Text style={styles.emptyText}>Nothing logged yet.</Text>
