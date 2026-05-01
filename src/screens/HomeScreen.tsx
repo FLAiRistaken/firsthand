@@ -27,7 +27,7 @@ export default function HomeScreen() {
   const { logs, addLog, deleteLog, isLoading: logsLoading } = useLogs(userId);
   const {
     todayLogs, todayWins, todaySins, streak, weekRatio,
-    personalAvg, ratioDiff, aboveAverage, streakDots
+    personalAvg, ratioDiff, aboveAverage, streakDots, graceActive
   } = useStats(logs);
   const { profile, updateProfile, isLoading: profileLoading } = useProfile();
   const insets = useSafeAreaInsets();
@@ -220,7 +220,12 @@ export default function HomeScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
-            <Text style={styles.statValueStreak}>{streak}d</Text>
+            <View style={styles.streakValueContainer}>
+              <Text style={styles.statValueStreak}>{streak}d</Text>
+              {graceActive && (
+                <Text style={styles.graceText}>grace</Text>
+              )}
+            </View>
             <Text style={styles.statLabel}>streak</Text>
           </View>
         </Card>
@@ -506,6 +511,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.serifSemiBold,
     fontSize: FontSizes.xxl - 2,
     color: Colors.textSecondary,
+  },
+  streakValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  graceText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
+    marginLeft: Spacing.xs,
   },
   statLabel: {
     fontFamily: Fonts.sans,
