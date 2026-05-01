@@ -1,4 +1,11 @@
-const PROXY_URL = process.env.EXPO_PUBLIC_PROXY_URL || 'https://firsthand-tjvn5.ondigitalocean.app';
+const _rawProxyUrl = process.env.EXPO_PUBLIC_PROXY_URL;
+if (!_rawProxyUrl || _rawProxyUrl.trim() === '') {
+  throw new Error(
+    'Missing required environment variable EXPO_PUBLIC_PROXY_URL. ' +
+      'Set PROXY_URL / EXPO_PUBLIC_PROXY_URL in your .env.local file before starting the app.'
+  );
+}
+const PROXY_URL = _rawProxyUrl.trim();
 
 export const callClaude = async (
   messages: { role: 'user' | 'assistant'; content: string }[],
