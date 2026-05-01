@@ -134,7 +134,7 @@ Listed in priority order. Each is small enough to bundle with the next relevant 
 | `src/lib/db.ts` | `getLogs` filters on non-existent `log.cancelled` field | ✅ Fixed — Removed dead filter |
 | `src/lib/db.ts` | `setLogCancelled` does hard delete despite name | ✅ Fixed — Renamed to `deleteLog` for clarity |
 | `src/screens/CoachScreen.tsx` | Auto-scroll doesn't reach bottom of last message | Investigate `scrollToEnd` timing — Phase 7 polish |
-| `src/screens/CoachScreen.tsx` | API error shows fake fallback question | Show honest error message — Phase 7.10 |
+| `src/screens/CoachScreen.tsx` | API error shows fake fallback question | ✅ Fixed — honest error bubble with amber styling |
 | `src/components/LogModal.tsx` (and EditLogModal) | Note `maxLength` not enforced | Add `maxLength={200}` and counter — Phase 7.9 |
 | Profile screen | Custom categories list grows unbounded in UI | Soft cap 20 visible — Phase 7.13 |
 | ProfileContext | `isCreatingAccount` flag wired up correctly? | Audit during Phase 7 — set in `try`, cleared in `finally`, checked in RootNavigator |
@@ -221,6 +221,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 19 | CI expansion — typecheck on all PRs + expo-doctor | ✅ Merged |
 | 21 | Anthropic proxy client — calls DO proxy instead of Anthropic directly | ✅ Merged |
 | 23 | Coach context on recent logs | ✅ Merged |
+| 24 | Coach error UI — honest error message instead of fake fallback | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)

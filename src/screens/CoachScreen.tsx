@@ -44,7 +44,7 @@ export default function CoachScreen() {
   const { logs } = useLogs(userId ?? null);
   const insets = useSafeAreaInsets();
 
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string; isError?: boolean }[]>([
     { role: 'assistant', content: "What's on your mind about your AI use today?" }
   ]);
   const [input, setInput] = useState('');
@@ -143,14 +143,13 @@ export default function CoachScreen() {
           content: reply || 'What made you reach for AI in that moment?'
         }
       ]);
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error('callClaude error:', error);
+    } catch {
       setMessages([
         ...updated,
         {
-          role: 'assistant',
-          content: `Error: ${msg}`
+          role: 'assistant' as const,
+          content: 'The Coach is having trouble right now. Try again in a moment.',
+          isError: true,
         }
       ]);
     } finally {
@@ -158,17 +157,24 @@ export default function CoachScreen() {
     }
   }
 
-  const renderBubble = (m: { role: 'user' | 'assistant'; content: string }, i: number) => {
+  const renderBubble = (m: { role: 'user' | 'assistant'; content: string; isError?: boolean }, i: number) => {
     const isUser = m.role === 'user';
     const showCoachLabel = !isUser && (i === 0 || messages[i - 1].role === 'user');
 
     return (
       <View key={i} style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAssistant]}>
         {showCoachLabel && <Text style={styles.coachLabel}>The Coach</Text>}
-        <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-          <Text style={isUser ? styles.userBubbleText : styles.assistantBubbleText}>
-            {m.content}
-          </Text>
+        <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble, m.isError && styles.errorBubble]}>
+          {m.isError ? (
+            <View style={styles.errorContent}>
+              <View style={styles.errorDot} />
+              <Text style={styles.errorBubbleText}>{m.content}</Text>
+            </View>
+          ) : (
+            <Text style={isUser ? styles.userBubbleText : styles.assistantBubbleText}>
+              {m.content}
+            </Text>
+          )}
         </View>
       </View>
     );
@@ -473,6 +479,28 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: Radius.full,
     backgroundColor: Colors.textHint,
+  },
+  errorBubble: {
+    borderColor: Colors.amber,
+  },
+  errorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.amber,
+    flexShrink: 0,
+  },
+  errorBubbleText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.md,
+    lineHeight: FontSizes.xxl,
+    color: Colors.amber,
+    flex: 1,
   },
   quickPromptsContainer: {
     marginTop: Spacing.sm,
