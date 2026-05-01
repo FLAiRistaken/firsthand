@@ -27,6 +27,7 @@ import { SendIcon } from '../components/icons/SendIcon';
 import { PersonIcon } from '../components/icons/PersonIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { ArrowIcon } from '../components/icons/ArrowIcon';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COACH_PROMPTS = [
   "I used AI when I didn't need to",
@@ -36,6 +37,18 @@ const COACH_PROMPTS = [
 ];
 
 const MAX_MESSAGES = 20;
+
+const COACH_SESSION_KEY = 'firsthand_coach_session';
+
+interface PersistedCoachSession {
+  messages: { role: 'user' | 'assistant'; content: string; isError?: boolean }[];
+  date: string; // YYYY-MM-DD in device local time
+}
+
+const getTodayDateString = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
 
 export default function CoachScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
@@ -110,6 +123,43 @@ export default function CoachScreen() {
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages.length]);
+
+  // Hydrate session from storage on mount
+  useEffect(() => {
+    const hydrate = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(COACH_SESSION_KEY);
+        if (!raw) return;
+        const session: PersistedCoachSession = JSON.parse(raw) as PersistedCoachSession;
+        if (session.date === getTodayDateString() && session.messages.length > 0) {
+          setMessages(session.messages);
+        } else {
+          // Different day — clear stale session
+          await AsyncStorage.removeItem(COACH_SESSION_KEY);
+        }
+      } catch {
+        // Silently fail — start fresh if storage is corrupt
+      }
+    };
+    hydrate();
+  }, []);
+
+  // Persist messages on every update (skip if only opening message)
+  useEffect(() => {
+    if (messages.length <= 1) return;
+    const persist = async () => {
+      try {
+        const session: PersistedCoachSession = {
+          messages,
+          date: getTodayDateString(),
+        };
+        await AsyncStorage.setItem(COACH_SESSION_KEY, JSON.stringify(session));
+      } catch {
+        // Silently fail
+      }
+    };
+    persist();
+  }, [messages]);
 
   async function send(textOverride?: string): Promise<void> {
     const content = (textOverride ?? input).trim();
@@ -230,6 +280,17 @@ export default function CoachScreen() {
               <View style={styles.statusDot} />
               <Text style={styles.statusText}>ready</Text>
             </View>
+            {messages.length > 1 && (
+              <TouchableOpacity
+                style={styles.startFreshButton}
+                onPress={() => {
+                  setMessages([{ role: 'assistant', content: "What's on your mind about your AI use today?" }]);
+                  AsyncStorage.removeItem(COACH_SESSION_KEY);
+                }}
+              >
+                <Text style={styles.startFreshText}>Start fresh</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -396,6 +457,18 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.sm,
     color: Colors.textMuted,
+  },
+  startFreshButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  startFreshText: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.xs,
+    color: Colors.textHint,
   },
   messageList: {
     flex: 1,
