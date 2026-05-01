@@ -100,3 +100,122 @@ export const upsertProfile = async (
 
   return data as UserProfile;
 };
+
+export const deleteUserAccount = async (userId: string): Promise<void> => {
+  // Get the current session to get access token
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    console.error('Error getting session:', sessionError);
+    throw new Error('No active session');
+  }
+
+  const proxyUrl = process.env.EXPO_PUBLIC_PROXY_URL;
+  const proxySecret = process.env.EXPO_PUBLIC_PROXY_SECRET;
+
+  if (!proxyUrl || !proxySecret) {
+    throw new Error('Missing proxy configuration');
+  }
+
+  // Call server endpoint to delete user account using service role
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(`${proxyUrl}/api/delete-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-proxy-secret': proxySecret,
+      },
+      body: JSON.stringify({
+        userId,
+        accessToken: session.access_token,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Error deleting account:', errorData);
+      throw new Error(errorData.error || 'Failed to delete account');
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      console.error('Timeout deleting account');
+      throw new Error('Request timeout deleting account');
+    }
+    throw err;
+  }
+
+  // Sign out after successful deletion
+  const { error: signOutError } = await supabase.auth.signOut();
+
+  if (signOutError) {
+    console.error('Error signing out after account deletion:', signOutError);
+    // Don't throw here since account is already deleted
+  }
+};
+
+// Helper function to escape CSV values
+const csvEscape = (value: unknown): string => {
+  if (value === undefined || value === null) {
+    return '""';
+  }
+  const stringValue = String(value);
+  const escaped = stringValue.replace(/"/g, '""');
+  return `"${escaped}"`;
+};
+
+export const exportUserData = async (userId: string): Promise<string> => {
+  const [logsResult, profileResult] = await Promise.all([
+    supabase
+      .from('logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('timestamp', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(),
+  ]);
+
+  if (logsResult.error) throw logsResult.error;
+  if (profileResult.error) throw profileResult.error;
+
+  const logs = logsResult.data ?? [];
+  const profile = profileResult.data;
+
+  // Build CSV
+  const profileSection = [
+    '# PROFILE',
+    'name,occupation,goal,success_definition,created_at',
+    [
+      csvEscape(profile?.name),
+      csvEscape(profile?.occupation),
+      csvEscape(profile?.goal),
+      csvEscape(profile?.success_definition),
+      csvEscape(profile?.created_at),
+    ].join(','),
+    '',
+    '# LOGS',
+    'id,timestamp,type,category,context,note,duration_mins',
+    ...logs.map(log =>
+      [
+        csvEscape(log.id),
+        csvEscape(log.timestamp),
+        csvEscape(log.type),
+        csvEscape(log.category),
+        csvEscape(log.context),
+        csvEscape(log.note),
+        csvEscape(log.duration_mins),
+      ].join(',')
+    ),
+  ].join('\n');
+
+  return profileSection;
+};

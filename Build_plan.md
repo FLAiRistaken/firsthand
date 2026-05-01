@@ -104,8 +104,8 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.2 | Error boundaries | ✅ Done | All main screens (Home, History, Coach, Onboarding) wrapped |
 | 7.3 | Anthropic proxy client | ✅ Done | callClaude now calls DO proxy (firsthand-tjvn5.ondigitalocean.app) via EXPO_PUBLIC_PROXY_SECRET |
 | 7.4 | Anthropic API backend proxy | ✅ Done | Express proxy server created in /server, ready for deployment |
-| 7.5 | App icon + splash screen | 🔲 Pending | Firsthand green dot identity |
-| 7.6 | Apple Developer account | 🔲 Pending | Required for real Apple Sign In + TestFlight |
+| 7.5 | App icon + splash screen | ✅ Done | Firsthand green dot identity |
+| 7.6 | Apple Developer account | ✅ Done | Required for real Apple Sign In + TestFlight |
 | 7.7 | Development build via EAS | 🔲 Pending | Removes Expo Go limitations, enables Google Sign In |
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
 | 7.9 | Note 200-char limit — LogModal + EditLogModal | ✅ Done | maxLength enforced, counter appears at 180 chars |
@@ -187,6 +187,7 @@ Do not build any of the following until explicitly added to the build plan:
 
 | # | Prompt | Outcome |
 |---|---|---|
+| 22 | Account deletion + data export | ✅ Merged |
 | 12 | Profile screen + AppNavigator stack | ✅ Merged |
 | 01 | Theme constants + font loading | ✅ Merged — Copilot fixed font key strings, `Category` type with `string & {}` |
 | 02 | Supabase client + types + DB schema + helpers | ✅ Merged — Copilot fixed `.maybeSingle()`, `updateLog` userId param, removed `Database = any` |
@@ -232,6 +233,7 @@ Do not build any of the following until explicitly added to the build plan:
 - **HF-02**: Dead code cleanup — getLogs filter + deleteLog rename — ✅ Merged
 - **HF-05**: Note 200-char enforcement — LogModal + EditLogModal — ✅ Merged
 - **HF-06**: develop→main PR fixes — theme tokens, ErrorBoundary on Profile, model param fix — ✅ Merged
+- **HF-07**: Fix CI type check — exportUserData/deleteUserAccount imports + expo-file-system legacy API — ✅ Merged
 
 ---
 
