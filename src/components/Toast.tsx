@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BrainIcon } from './icons/BrainIcon';
-import { ChipIcon } from './icons/ChipIcon';
+import BrainIcon from './icons/BrainIcon';
+import ChipIcon from './icons/ChipIcon';
 import { Colors, Fonts, FontSizes } from '../constants/theme';
 
 interface ToastProps {

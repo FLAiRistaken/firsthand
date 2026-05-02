@@ -9,7 +9,7 @@ import { upsertProfile } from '../lib/db';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { UserProfile } from '../lib/types';
-import { SendIcon } from '../components/icons/SendIcon';
+import SendIcon from '../components/icons/SendIcon';
 import { requestNotificationPermission, scheduleDaily } from '../lib/notifications';
 import { supabase } from '../lib/supabase';
 import ErrorBoundary from '../components/ErrorBoundary';

@@ -3,11 +3,11 @@ import Svg, { Path } from 'react-native-svg';
 
 interface Props { size?: number; color?: string; }
 
-const ChipIcon: React.FC<Props> = ({ size = 22, color = 'currentColor' }) => (
+const TabHistoryIcon: React.FC<Props> = ({ size = 22, color = 'currentColor' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={1} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
+    <Path d="M3 6h18M3 12h18M3 18h12" />
   </Svg>
 );
 
-export default ChipIcon;
+export default TabHistoryIcon;
