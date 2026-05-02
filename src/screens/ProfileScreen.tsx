@@ -38,7 +38,6 @@ export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
   const { signOut, userId } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const insets = useSafeAreaInsets();
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -490,7 +489,6 @@ export default function ProfileScreen() {
                     // Persist first, then cancel. If persist fails, no cancellation happens.
                     await updateProfile({ notifications_enabled: false });
                     try {
-                      setShowTimePicker(false);
                       await cancelNotifications();
                     } catch (cancelError) {
                       // Rollback: persist previous state and re-throw
@@ -517,50 +515,39 @@ export default function ProfileScreen() {
             <View style={styles.notificationRow}>
               <Text style={styles.notificationLabel}>Reminder time</Text>
 
-              <TouchableOpacity onPress={() => setShowTimePicker(true)}>
-                <Text style={styles.reminderTime}>
-                  {(() => {
-                    const [h, m] = (profile?.notification_time ?? '20:00').split(':');
-                    const date = new Date();
-                    date.setHours(parseInt(h, 10), parseInt(m, 10));
-                    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                  })()}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {showTimePicker && (
-            <DateTimePicker
-              mode="time"
-              display="default"
-              value={(() => {
-                const [h, m] = (profile?.notification_time ?? '20:00').split(':');
-                const date = new Date();
-                date.setHours(parseInt(h, 10), parseInt(m, 10));
-                return date;
-              })()}
-              onChange={async (event: DateTimePickerEvent, date?: Date | undefined) => {
-                setShowTimePicker(false);
-                if (!date) return;
-                if (!profile?.notifications_enabled) return;
-                const hh = String(date.getHours()).padStart(2, '0');
-                const mm = String(date.getMinutes()).padStart(2, '0');
-                const timeString = `${hh}:${mm}`;
-                try {
-                  await scheduleDaily(timeString);
-                  await updateProfile({ notification_time: timeString });
-                } catch (error: unknown) {
-                  if (error instanceof Error) {
-                    console.error('Failed to update notification time:', error);
-                    Alert.alert('Error', `Failed to update notification time: ${error.message}`);
-                  } else {
-                    console.error('Failed to update notification time:', error);
-                    Alert.alert('Error', 'Failed to update notification time.');
+              <DateTimePicker
+                mode="time"
+                display={Platform.OS === 'ios' ? 'compact' : 'spinner'}
+                value={(() => {
+                  const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                  const date = new Date();
+                  date.setHours(parseInt(h, 10), parseInt(m, 10));
+                  return date;
+                })()}
+                onChange={async (event: DateTimePickerEvent, date?: Date | undefined) => {
+                  if (!date || event.type === 'dismissed') return;
+                  if (!profile?.notifications_enabled) return;
+                  
+                  const hh = String(date.getHours()).padStart(2, '0');
+                  const mm = String(date.getMinutes()).padStart(2, '0');
+                  const timeString = `${hh}:${mm}`;
+                  
+                  try {
+                    await scheduleDaily(timeString);
+                    await updateProfile({ notification_time: timeString });
+                  } catch (error: unknown) {
+                    if (error instanceof Error) {
+                      console.error('Failed to update notification time:', error);
+                      Alert.alert('Error', `Failed to update notification time: ${error.message}`);
+                    } else {
+                      console.error('Failed to update notification time:', error);
+                      Alert.alert('Error', 'Failed to update notification time.');
+                    }
                   }
-                }
-              }}
-            />
+                }}
+                style={styles.picker}
+              />
+            </View>
           )}
         </View>
       </Card>
@@ -947,7 +934,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
+    minHeight: 44,
+  },
+  picker: {
+    marginRight: -8, // Offset the default picker padding
   },
   notificationTextContainer: {
     flex: 1,
