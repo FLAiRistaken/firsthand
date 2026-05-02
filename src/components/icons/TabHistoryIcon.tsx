@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
 
-interface Props { size?: number; color?: string; }
+interface Props { size?: number; color?: string; filled?: boolean; }
 
 const TabHistoryIcon: React.FC<Props> = ({ size = 22, color = 'currentColor' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
