@@ -89,6 +89,7 @@ export const Sizes = {
   headerHeight: 52,
   buttonHeight: 52,
   iconSm: 18,
+  icon: 22,
   avatar: 72,
   chartHeight: 80,
   categoryNameWidth: 72,
@@ -116,6 +117,11 @@ export const Radius = {
 
 export const LetterSpacing = {
   cardLabel: 0.8,
+}
+
+export const Icons = {
+  defaultSize: 22,
+  defaultColor: 'currentColor' as const,
 }
 
 export const DEFAULT_CATEGORIES = [
