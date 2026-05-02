@@ -110,8 +110,8 @@ All Jules prompts are written by the Orchestrator. Copilot reviews every PR. Orc
 | 7.8 | Privacy policy + terms | 🔲 Pending | Auth screen references these — need real URLs |
 | 7.9 | Note 200-char limit — LogModal + EditLogModal | ✅ Done | maxLength enforced, counter appears at 180 chars |
 | 7.10 | App Store submission | 🔲 Pending | |
-| 7.11 | First-launch tutorial | ✅ Done | Coach session persistence — AsyncStorage, same-day hydration, Start fresh button |
 | 7.12 | Dead code cleanup | ✅ Done | Removed non-existent `log.cancelled` filter from `getLogs` |
+| 7.14 | Daily notifications | ✅ Done | Resolved 'UnableToResolveError' for expo-notifications |
 
 ---
 
@@ -224,6 +224,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 25 | Coach session persistence — AsyncStorage, same-day hydration | ✅ Merged |
 | 26 | Patterns view — time of day, day of week, top categories | ✅ Merged |
 | 27 | Daily notifications — opt-in, rotating messages, time picker | ✅ Merged |
+| 28 | Fix expo-notifications dependency | ✅ Merged |
 
 ### Hotfixes via Antigravity (smaller, surgical changes)
 - RLS DELETE policy added to logs table (resolved silent 204 undo bug)
