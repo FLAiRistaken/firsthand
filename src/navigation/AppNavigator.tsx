@@ -25,7 +25,17 @@ const Stack = createNativeStackNavigator<AppStackParamList>();
 function TabNavigator() {
   return (
     <Tab.Navigator
-      tabBar={(props) => <TabBar {...props} />}
+      tabBar={(props) => (
+        <TabBar
+          activeTab={props.state.routes[props.state.index].name}
+          onTabPress={(tabName) => {
+            const route = props.state.routes.find(r => r.name === tabName);
+            if (route) {
+              props.navigation.navigate(tabName);
+            }
+          }}
+        />
+      )}
       screenOptions={{
         headerShown: false,
       }}

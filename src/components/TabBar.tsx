@@ -1,14 +1,24 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Fonts, Spacing } from '../constants/theme';
 import TabHomeIcon from './icons/TabHomeIcon';
 import TabHistoryIcon from './icons/TabHistoryIcon';
 import TabCoachIcon from './icons/TabCoachIcon';
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+interface TabBarProps {
+  activeTab: string;
+  onTabPress: (tabName: string) => void;
+}
+
+export function TabBar({ activeTab, onTabPress }: TabBarProps) {
   const insets = useSafeAreaInsets();
+
+  const tabs = [
+    { name: 'Home', Icon: TabHomeIcon },
+    { name: 'History', Icon: TabHistoryIcon },
+    { name: 'Coach', Icon: TabCoachIcon },
+  ];
 
   return (
     <View
@@ -19,49 +29,20 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         },
       ]}
     >
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name;
-
-        const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        const color = isFocused ? Colors.primary : Colors.inkFaint;
-
-        let Icon = TabHomeIcon;
-        if (route.name === 'History') {
-          Icon = TabHistoryIcon;
-        } else if (route.name === 'Coach') {
-          Icon = TabCoachIcon;
-        }
+      {tabs.map((tab) => {
+        const isFocused = activeTab === tab.name;
+        const color = isFocused ? Colors.primary : Colors.tabInactive;
 
         return (
           <TouchableOpacity
-            key={route.key}
+            key={tab.name}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            onPress={onPress}
+            onPress={() => onTabPress(tab.name)}
             style={styles.tab}
             activeOpacity={0.7}
           >
-            <Icon
+            <tab.Icon
               size={22}
               color={color}
               filled={isFocused}
@@ -72,7 +53,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 { color }
               ]}
             >
-              {label as string}
+              {tab.name}
             </Text>
           </TouchableOpacity>
         );
