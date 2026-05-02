@@ -172,8 +172,7 @@ export default function OnboardingScreen() {
       const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
       const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
-      // Step 3: Build the complete profile object without onboarded flag
-      // This prevents immediate navigation and allows the notification step to show
+      // Step 3: Build the complete profile object WITH onboarded: true
       const newProfile: UserProfile = {
         id: session.user.id,
         name: profileRef.current.name ?? '',
@@ -183,25 +182,26 @@ export default function OnboardingScreen() {
         goal: profileRef.current.goal ?? '',
         success_definition: profileRef.current.success_definition ?? '',
         custom_categories: [],
-        onboarded: false,
+        onboarded: true,
         created_at: new Date().toISOString(),
       };
 
       // Step 4: Write to DB directly
       await upsertProfile(newProfile);
 
-      // Step 5: Set ProfileContext state without onboarded flag
-      setProfile(newProfile);
+      // Step 5: Ensure context and DB see onboarded: true BEFORE showing notification step
+      // This ensures RootNavigator sees the finished state even if it re-evaluates
+      await updateProfile({ onboarded: true });
 
-      // Step 6: Show notification step before marking as onboarded
+      // Step 6: Show notification step as an overlay on top of onboarded state
       setShowNotificationStep(true);
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       Alert.alert('Account creation failed', message);
-      setIsCreatingAccount(false);
     } finally {
       setAccountLoading(false);
+      setIsCreatingAccount(false);
     }
   };
 
