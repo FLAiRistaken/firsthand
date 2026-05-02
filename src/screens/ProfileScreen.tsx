@@ -11,6 +11,8 @@ import {
   Platform,
   Share,
   ActivityIndicator,
+
+  Switch
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -29,11 +31,14 @@ import { ChipIcon } from '../components/icons/ChipIcon';
 import { BrainIcon } from '../components/icons/BrainIcon';
 import { GearIcon } from '../components/icons/GearIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { requestNotificationPermission, scheduleDaily, cancelNotifications } from '../lib/notifications';
 
 export default function ProfileScreen() {
   const { profile, updateProfile } = useProfile();
   const { signOut, userId } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const insets = useSafeAreaInsets();
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -196,10 +201,10 @@ export default function ProfileScreen() {
 
   return (
     <ErrorBoundary screenName="Profile">
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
@@ -450,6 +455,113 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.notificationRow}>
+            <View style={styles.notificationTextContainer}>
+              <Text style={styles.notificationLabel}>Daily reminder</Text>
+              <Text style={styles.notificationDescription}>A nudge to log your thinking each day.</Text>
+            </View>
+            <Switch
+              value={profile?.notifications_enabled ?? false}
+              onValueChange={async (enabled: boolean) => {
+                try {
+                  if (enabled) {
+                    const granted = await requestNotificationPermission();
+                    if (!granted) {
+                      Alert.alert(
+                        'Permission required',
+                        'Enable notifications in Settings to use this feature.'
+                      );
+                      return;
+                    }
+                    const time = profile?.notification_time ?? '20:00';
+                    // Persist first, then schedule. If persist fails, no scheduling happens.
+                    await updateProfile({ notifications_enabled: true });
+                    try {
+                      await scheduleDaily(time);
+                    } catch (scheduleError) {
+                      // Rollback: persist failed state and re-throw
+                      await updateProfile({ notifications_enabled: false });
+                      throw scheduleError;
+                    }
+                  } else {
+                    // Persist first, then cancel. If persist fails, no cancellation happens.
+                    await updateProfile({ notifications_enabled: false });
+                    try {
+                      setShowTimePicker(false);
+                      await cancelNotifications();
+                    } catch (cancelError) {
+                      // Rollback: persist previous state and re-throw
+                      await updateProfile({ notifications_enabled: true });
+                      throw cancelError;
+                    }
+                  }
+                } catch (error: unknown) {
+                  if (error instanceof Error) {
+                    console.error('Failed to toggle notifications:', error);
+                    Alert.alert('Error', `Failed to update notification settings: ${error.message}`);
+                  } else {
+                    console.error('Failed to toggle notifications:', error);
+                    Alert.alert('Error', 'Failed to update notification settings.');
+                  }
+                }
+              }}
+              trackColor={{ false: Colors.streakEmpty, true: Colors.primaryLight }}
+              thumbColor={profile?.notifications_enabled ? Colors.primary : Colors.textHint}
+            />
+          </View>
+
+          {profile?.notifications_enabled && (
+            <View style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>Reminder time</Text>
+
+              <TouchableOpacity onPress={() => setShowTimePicker(true)}>
+                <Text style={styles.reminderTime}>
+                  {(() => {
+                    const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                    const date = new Date();
+                    date.setHours(parseInt(h, 10), parseInt(m, 10));
+                    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                  })()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              mode="time"
+              display="default"
+              value={(() => {
+                const [h, m] = (profile?.notification_time ?? '20:00').split(':');
+                const date = new Date();
+                date.setHours(parseInt(h, 10), parseInt(m, 10));
+                return date;
+              })()}
+              onChange={async (event: DateTimePickerEvent, date?: Date | undefined) => {
+                setShowTimePicker(false);
+                if (!date) return;
+                if (!profile?.notifications_enabled) return;
+                const hh = String(date.getHours()).padStart(2, '0');
+                const mm = String(date.getMinutes()).padStart(2, '0');
+                const timeString = `${hh}:${mm}`;
+                try {
+                  await scheduleDaily(timeString);
+                  await updateProfile({ notification_time: timeString });
+                } catch (error: unknown) {
+                  if (error instanceof Error) {
+                    console.error('Failed to update notification time:', error);
+                    Alert.alert('Error', `Failed to update notification time: ${error.message}`);
+                  } else {
+                    console.error('Failed to update notification time:', error);
+                    Alert.alert('Error', 'Failed to update notification time.');
+                  }
+                }
+              }}
+            />
+          )}
         </View>
       </Card>
 
@@ -540,7 +652,7 @@ export default function ProfileScreen() {
       </View>
 
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
     </ErrorBoundary>
   );
 }
@@ -830,5 +942,31 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: FontSizes.xs,
     color: Colors.textHint,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+  },
+  notificationTextContainer: {
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
+  notificationLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.textPrimary,
+  },
+  notificationDescription: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.sm,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  reminderTime: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: FontSizes.md,
+    color: Colors.primary,
   },
 });

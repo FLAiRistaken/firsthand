@@ -26,6 +26,8 @@ export interface UserProfile {
   created_at: string;
   onboarded: boolean;
   default_context?: LogContext | null;
+  notifications_enabled?: boolean;
+  notification_time?: string;
 }
 
 export interface AppState {

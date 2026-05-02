@@ -10,6 +10,7 @@ import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
 import { UserProfile } from '../lib/types';
 import { SendIcon } from '../components/icons/SendIcon';
+import { requestNotificationPermission, scheduleDaily } from '../lib/notifications';
 import { supabase } from '../lib/supabase';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -60,7 +61,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { userId } = useAuth();
-  const { setProfile, setIsCreatingAccount } = useProfile();
+  const { setProfile, setIsCreatingAccount, updateProfile } = useProfile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -71,6 +72,8 @@ export default function OnboardingScreen() {
   const [accountEmail, setAccountEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
   const [accountLoading, setAccountLoading] = useState(false);
+
+  const [showNotificationStep, setShowNotificationStep] = useState(false);
 
   const profileRef = useRef<CoachUserProfile & { raw_tools?: string; raw_uses?: string }>({ name: '' });
   const flatListRef = useRef<FlatList>(null);
@@ -111,7 +114,15 @@ export default function OnboardingScreen() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [showAccountCreation]);
+  }, [showAccountCreation, showNotificationStep]);
+
+  useEffect(() => {
+    if (showNotificationStep) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [showNotificationStep]);
 
   const handleCreateAccount = async (): Promise<void> => {
     const trimmedEmail = accountEmail.trim();
@@ -161,7 +172,8 @@ export default function OnboardingScreen() {
       const tools = profileRef.current.raw_tools ? profileRef.current.raw_tools.split(',').map((s: string) => s.trim()) : [];
       const uses = profileRef.current.raw_uses ? profileRef.current.raw_uses.split(',').map((s: string) => s.trim()) : [];
 
-      // Step 3: Build the complete profile object
+      // Step 3: Build the complete profile object without onboarded flag
+      // This prevents immediate navigation and allows the notification step to show
       const newProfile: UserProfile = {
         id: session.user.id,
         name: profileRef.current.name ?? '',
@@ -171,23 +183,24 @@ export default function OnboardingScreen() {
         goal: profileRef.current.goal ?? '',
         success_definition: profileRef.current.success_definition ?? '',
         custom_categories: [],
-        onboarded: true,
+        onboarded: false,
         created_at: new Date().toISOString(),
       };
 
       // Step 4: Write to DB directly
       await upsertProfile(newProfile);
 
-      // Step 5: Set ProfileContext state directly — no waiting for React
-      // state propagation. RootNavigator immediately sees onboarded: true
-      // and routes to App.
+      // Step 5: Set ProfileContext state without onboarded flag
       setProfile(newProfile);
+
+      // Step 6: Show notification step before marking as onboarded
+      setShowNotificationStep(true);
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Something went wrong.';
       Alert.alert('Account creation failed', message);
-    } finally {
       setIsCreatingAccount(false);
+    } finally {
       setAccountLoading(false);
     }
   };
@@ -248,8 +261,72 @@ export default function OnboardingScreen() {
     );
   };
 
+  const renderNotificationStep = () => {
+    if (!showNotificationStep) return null;
+
+    return (
+      <Animated.View style={[styles.notificationStepContainer, { opacity: fadeAnim }]}>
+        <View style={styles.notificationDivider} />
+        <Text style={styles.notificationHeading}>Stay in the habit</Text>
+        <Text style={styles.notificationSubtext}>
+          Get a daily nudge to log your thinking. One notification, no noise.
+        </Text>
+
+        <View style={styles.notificationButtonsContainer}>
+          <TouchableOpacity
+            style={styles.accountButton}
+            onPress={async () => {
+              try {
+                const granted = await requestNotificationPermission();
+                if (granted) {
+                  await scheduleDaily('20:00');
+                  await updateProfile({
+                    notifications_enabled: true,
+                    notification_time: '20:00',
+                    onboarded: true,
+                  });
+                } else {
+                  await updateProfile({ onboarded: true });
+                }
+              } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Failed to enable notifications:', errorMessage);
+                Alert.alert(
+                  'Error',
+                  'Failed to enable notifications. Please try again from Settings.'
+                );
+              } finally {
+                setIsCreatingAccount(false);
+              }
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.accountButtonText}>Turn on notifications</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.notificationMaybeLater}
+            onPress={async () => {
+              try {
+                await updateProfile({ onboarded: true });
+              } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('Failed to update profile:', errorMessage);
+                Alert.alert('Error', 'Failed to save. Please try again.');
+              } finally {
+                setIsCreatingAccount(false);
+              }
+            }}
+          >
+            <Text style={{ fontFamily: Fonts.sans, fontSize: FontSizes.md, color: Colors.textHint }}>Maybe later</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
   const renderAccountCreation = () => {
-    if (!showAccountCreation) return null;
+    if (!showAccountCreation || showNotificationStep) return null;
 
     return (
       <Animated.View style={{ opacity: fadeAnim }}>
@@ -303,10 +380,10 @@ export default function OnboardingScreen() {
 
   return (
     <ErrorBoundary screenName="Onboarding">
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <View style={[styles.wordmarkContainer, { marginBottom: 0 }]}>
@@ -352,6 +429,7 @@ export default function OnboardingScreen() {
           <View>
             {loading && <TypingIndicator />}
             {renderAccountCreation()}
+            {renderNotificationStep()}
           </View>
         }
       />
@@ -385,7 +463,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
       )}
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
     </ErrorBoundary>
   );
 }
@@ -623,5 +701,35 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sansMedium,
     fontSize: FontSizes.sm,
     color: Colors.primary,
+  },
+  notificationStepContainer: {
+    paddingHorizontal: Spacing.screen,
+  },
+  notificationDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.xl,
+  },
+  notificationHeading: {
+    fontFamily: Fonts.serifSemiBold,
+    fontSize: FontSizes.xl,
+    color: Colors.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  notificationSubtext: {
+    fontFamily: Fonts.sans,
+    fontSize: FontSizes.md,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  notificationButtonsContainer: {
+    gap: 12,
+  },
+  notificationMaybeLater: {
+    padding: Spacing.md,
+    alignItems: 'center',
   },
 });
