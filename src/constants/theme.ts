@@ -1,4 +1,13 @@
 export const Colors = {
+  inkDim: '#5C5A52',
+  inkFaint: '#8E8B81',
+  inkHair: 'rgba(26,26,23,0.08)',
+  inkHairStrong: 'rgba(26,26,23,0.14)',
+  primaryDeep: '#1F4634',
+  primarySoft: '#E8EFE9',
+  primaryTint: '#D8E4DA',
+  amberSoft: '#F4ECD8',
+  amberTint: '#E8D9B4',
   primary: '#2A5C45',
   primaryLight: '#E8F2ED',
   primaryBorder: '#C8E2D5',
@@ -40,6 +49,7 @@ export const Colors = {
 }
 
 export const Fonts = {
+  serifMedium: 'Fraunces_600SemiBold',
   serif: 'Fraunces_400Regular',
   serifSemiBold: 'Fraunces_600SemiBold',
   sans: 'DMSans_400Regular',
@@ -59,6 +69,7 @@ export const FontSizes = {
 }
 
 export const Spacing = {
+  hairline: 0.5,
   xxs: 2,
   xs: 4,
   xsMd: 6,
@@ -74,8 +85,11 @@ export const Spacing = {
 }
 
 export const Sizes = {
+  tabBarHeight: 56,
+  headerHeight: 52,
   buttonHeight: 52,
   iconSm: 18,
+  icon: 22,
   avatar: 72,
   chartHeight: 80,
   categoryNameWidth: 72,
@@ -103,6 +117,11 @@ export const Radius = {
 
 export const LetterSpacing = {
   cardLabel: 0.8,
+}
+
+export const Icons = {
+  defaultSize: 22,
+  defaultColor: 'currentColor' as const,
 }
 
 export const DEFAULT_CATEGORIES = [

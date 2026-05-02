@@ -1,8 +1,11 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
-import { Colors, Fonts } from '../constants/theme';
+import { Colors, Fonts, Spacing } from '../constants/theme';
+import TabHomeIcon from './icons/TabHomeIcon';
+import TabHistoryIcon from './icons/TabHistoryIcon';
+import TabCoachIcon from './icons/TabCoachIcon';
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -12,7 +15,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       style={[
         styles.container,
         {
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 16,
+          paddingBottom: Math.max(insets.bottom, Spacing.xxl),
         },
       ]}
     >
@@ -39,16 +42,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           }
         };
 
-        const color = isFocused ? Colors.primary : Colors.tabInactive;
+        const color = isFocused ? Colors.primary : Colors.inkFaint;
 
-        let iconPath = '';
-        if (route.name === 'Home') {
-          iconPath = 'M12 3L2 12h3v8h6v-5h2v5h6v-8h3z';
-        } else if (route.name === 'History') {
-          iconPath = 'M4 6h16M4 10h16M4 14h10';
+        let Icon = TabHomeIcon;
+        if (route.name === 'History') {
+          Icon = TabHistoryIcon;
         } else if (route.name === 'Coach') {
-          iconPath =
-            'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z';
+          Icon = TabCoachIcon;
         }
 
         return (
@@ -58,28 +58,18 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
             onPress={onPress}
-            style={styles.tabItem}
+            style={styles.tab}
             activeOpacity={0.7}
           >
-            <View style={styles.iconContainer}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d={iconPath}
-                  stroke={color}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill={route.name === 'Home' ? color : 'none'}
-                />
-              </Svg>
-            </View>
+            <Icon
+              size={22}
+              color={color}
+              filled={isFocused}
+            />
             <Text
               style={[
-                styles.tabLabel,
-                {
-                  color,
-                  fontFamily: isFocused ? Fonts.sansMedium : Fonts.sans,
-                },
+                styles.label,
+                { color }
               ]}
             >
               {label as string}
@@ -94,20 +84,20 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    borderTopWidth: Spacing.hairline,
+    borderTopColor: Colors.inkHair,
     backgroundColor: Colors.appBg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: 12,
+    paddingTop: Spacing.smLg,
   },
-  tabItem: {
+  tab: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
   },
-  iconContainer: {
-    marginBottom: 4,
-  },
-  tabLabel: {
-    fontSize: 10,
+  label: {
+    fontFamily: Fonts.sans,
+    fontSize: 10.5,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
 });

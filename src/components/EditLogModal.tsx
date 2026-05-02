@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing, Sizes, BorderWidths, DEFAULT_CATEGORIES } from '../constants/theme';
 import { PillButton } from './PillButton';
-import { BrainIcon } from './icons/BrainIcon';
-import { ChipIcon } from './icons/ChipIcon';
+import BrainIcon from './icons/BrainIcon';
+import ChipIcon from './icons/ChipIcon';
 import { Card } from './Card';
 import type { LogEntry, LogContext } from '../lib/types';
 

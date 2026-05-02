@@ -23,10 +23,10 @@ import { useProfile } from '../hooks/useProfile';
 import { useLogs } from '../hooks/useLogs';
 import { callClaude } from '../lib/anthropic';
 import { COACH_SYSTEM, sanitizePromptValue, RecentLogSummary } from '../lib/prompts';
-import { SendIcon } from '../components/icons/SendIcon';
-import { PersonIcon } from '../components/icons/PersonIcon';
+import SendIcon from '../components/icons/SendIcon';
+import PersonIcon from '../components/icons/PersonIcon';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { ArrowIcon } from '../components/icons/ArrowIcon';
+import ArrowIcon from '../components/icons/ArrowIcon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COACH_PROMPTS = [

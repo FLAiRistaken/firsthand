@@ -207,6 +207,7 @@ Do not build any of the following until explicitly added to the build plan:
 | 12 | Profile screen | ✅ Merged |
 | 13 | ProfileContext — shared profile state | ✅ Merged |
 | 17 | Profile screen rework — edit UX, visual refresh, behaviour settings | ✅ Merged |
+| 28 | Redesign phase 1 — design tokens, icons, TabBar | ✅ Merged |
 
 | 09 | Home screen + LogModal component | ✅ Merged |
 | 09b | Undo window + deleteLog | ✅ Merged |

@@ -9,9 +9,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useLogs } from '../hooks/useLogs';
 import { useProfile } from '../hooks/useProfile';
 import { PillButton } from '../components/PillButton';
-import { PersonIcon } from '../components/icons/PersonIcon';
-import { BrainIcon } from '../components/icons/BrainIcon';
-import { ChipIcon } from '../components/icons/ChipIcon';
+import PersonIcon from '../components/icons/PersonIcon';
+import BrainIcon from '../components/icons/BrainIcon';
+import ChipIcon from '../components/icons/ChipIcon';
 import { EditLogModal } from '../components/EditLogModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
